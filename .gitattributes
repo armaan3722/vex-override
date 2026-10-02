@@ -1,0 +1,6 @@
+# Normalize line endings
+* text=auto eol=lf
+
+# Set diff types
+*.py diff=python
+*.md diff=markdown

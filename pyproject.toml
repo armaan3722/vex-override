@@ -1,0 +1,28 @@
+[project]
+name = "vex-override"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Armaan Sandhu", email = "103614886+armaan3722@users.noreply.github.com" }
+]
+requires-python = ">=3.14,<3.15"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff==0.16.10",
+    "ty>=0.0.84",
+]
+
+[tool.ruff]
+extend-exclude = ["src/vex/", "temp"]
+
+[tool.ty.src]
+exclude = ["src/vex/", "temp"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath =["src"]
+addopts = ["-q", "--tb=no"]
