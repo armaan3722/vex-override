@@ -196,12 +196,12 @@ def test_drive_cm():
         controller.screen.set_cursor(1, 1)
         controller.screen.print("Use up and down to set distance.")
         controller.screen.set_cursor(2, 1)
-        controller.screen.print("Press A to start test.")
+        controller.screen.print("Press X to start test.")
         controller.screen.set_cursor(3, 1)
         controller.screen.print("Testing " + str(distance) + "cm.")
 
         while True:
-            if controller.buttonA.pressing() or controller.buttonUp.pressing() or controller.buttonDown.pressing():
+            if controller.buttonX.pressing() or controller.buttonUp.pressing() or controller.buttonDown.pressing():
                 break
 
         if controller.buttonUp.pressing():
@@ -209,24 +209,27 @@ def test_drive_cm():
         elif controller.buttonDown.pressing():
             distance -= 5
         else:
-            controller.screen.clear_screen()
-            controller.screen.set_cursor(1, 1)
-            controller.screen.print("Use up and down to set speed.")
-            controller.screen.set_cursor(2, 1)
-            controller.screen.print("Press A to start test.")
-            controller.screen.set_cursor(3, 1)
-            controller.screen.print("Testing " + str(speed) + "%")
+            break
 
-            while True:
-                if controller.buttonA.pressing() or controller.buttonUp.pressing() or controller.buttonDown.pressing():
-                    break
+    while True:
+        controller.screen.clear_screen()
+        controller.screen.set_cursor(1, 1)
+        controller.screen.print("Use up and down to set speed.")
+        controller.screen.set_cursor(2, 1)
+        controller.screen.print("Press A to start test.")
+        controller.screen.set_cursor(3, 1)
+        controller.screen.print("Testing " + str(speed) + "%")
 
-            if controller.buttonUp.pressing():
-                speed += 5
-            elif controller.buttonDown.pressing():
-                speed -= 5
-            else:
-                drive_cm(distance, speed)
+        while True:
+            if controller.buttonA.pressing() or controller.buttonUp.pressing() or controller.buttonDown.pressing():
+                break
+
+        if controller.buttonUp.pressing():
+            speed += 5
+        elif controller.buttonDown.pressing():
+            speed -= 5
+        else:
+            drive_cm(distance, speed)
 
 #####################
 ### STARTING CODE ###
