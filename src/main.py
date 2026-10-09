@@ -12,25 +12,25 @@ DRIVE_WHEELS_DIAMETER: float = 10.16
 
 def check_in_range(
     input_value: float,
-    greater_than: int | None = None,
-    less_than: int | None = None,
-    greater_than_or_equals: bool = False,
-    less_that_or_equals: bool = False,
+    min_value: float | None = None,
+    max_value: float | None = None,
+    min_inclusive: bool = False,
+    max_inclusive: bool = False,
 ) -> None:
     # Check if outside greater than restrictions
-    if greater_than_or_equals:
-        if greater_than is not None and input_value >= greater_than:
+    if min_inclusive:
+        if min_value is not None and input_value < min_value:
             raise ValueError()
     else:
-        if greater_than is not None and input_value > greater_than:
+        if min_value is not None and input_value <= min_value:
             raise ValueError()
 
     # Check if outside less than restrictions
-    if less_that_or_equals:
-        if less_than is not None and input_value <= less_than:
+    if max_inclusive:
+        if max_value is not None and input_value > max_value:
             raise ValueError()
     else:
-        if less_than is not None and input_value < less_than:
+        if max_value is not None and input_value >= max_value:
             raise ValueError()
 
 
