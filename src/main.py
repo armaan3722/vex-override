@@ -17,6 +17,21 @@ def check_in_range(
     min_inclusive: bool = False,
     max_inclusive: bool = False,
 ) -> None:
+    """Check if an input is within a specified range.  Returns nothing if it
+    is, and raises a ValueError if it is outside the range.
+
+    Args:
+        input_value: The value for the input.
+        min_value: The minimum value for the range.
+        max_value: The maximum value for the range.
+        min_inclusive: Whether the minimum value should be included in the
+            range.
+        max_inclusive: Whether the maximum value should be included in the
+            range.
+
+    Raises:
+        ValueError: If input_value is outside the definend range.
+    """
     # Check if outside greater than restrictions
     if min_inclusive:
         if min_value is not None and input_value < min_value:
@@ -91,7 +106,7 @@ def get_rotations_from_distance(distance: float, wheel_diameter: float) -> float
     Raises:
         ValueError: If distance or wheel_diameter are negative.
     """
-    # Raise errors
+    # Raise value errors
     check_in_range(distance, 0, None, True, True)
     check_in_range(wheel_diameter, 0, None, True, True)
 
@@ -203,6 +218,145 @@ def user_control() -> None:
 ####################
 
 
+def start_testing_mode() -> None:
+    # Clear both screens
+    brain.screen.clear_screen()
+    controller.screen.clear_screen()
+
+    # Print testing message
+    brain.screen.set_cursor(1, 1)
+    controller.screen.set_cursor(1, 1)
+    brain.screen.print("Testing mode")
+    controller.screen.print("Testing mode")
+
+    wait(2, SECONDS)
+
+    # Print menu information
+    controller.screen.clear_screen()
+    controller.screen.set_cursor(1, 1)
+    controller.screen.print("A to drive\nB for auto")
+
+    # Create state variables
+    button_a_previously_pressed = True
+    button_b_previously_pressed = True
+
+    # Check for next action
+    while True:
+        if (controller.buttonA.pressing() and not button_a_previously_pressed) or (
+            controller.buttonB.pressing() and not button_b_previously_pressed
+        ):
+            break
+
+        # Update state
+        button_a_previously_pressed = controller.buttonA.pressing()
+        button_b_previously_pressed = controller.buttonB.pressing()
+
+        # Limit loop to 50hz
+        wait(20)
+
+    # Check which button was pressed
+    if controller.buttonA.pressing() and not button_a_previously_pressed:
+        controller.screen.clear_screen()
+        controller.screen.set_cursor(1, 1)
+        controller.screen.print("Driving mode")
+        user_control()
+    else:
+        select_auto_test_mode()
+
+
+def select_auto_test_mode() -> None:
+    # Print info to screen
+    controller.screen.clear_screen()
+    controller.screen.set_cursor(1, 1)
+    controller.screen.print("A for low level")
+
+    # Create state tracking variables
+    button_a_previously_pressed = True
+    button_b_previously_pressed = True
+
+    # Wait for button press
+    while True:
+        if (controller.buttonA.pressing() and not button_a_previously_pressed) or (
+            controller.buttonB.pressing() and not button_b_previously_pressed
+        ):
+            break
+
+        # Update state
+        button_a_previously_pressed = controller.buttonA.pressing()
+
+        # Limit to 50hz
+        wait(20)
+
+    # Run correct functions
+    if controller.buttonA.pressing() and not button_a_previously_pressed:
+        select_low_level_function_test()
+    else:
+        # Runs if B pressed, goes back
+        start_testing_mode()
+
+
+def select_low_level_function_test() -> None:
+    # Set list of functions
+    low_level_functions = [("Drive CM", test_drive_cm)]
+
+    # Define state variables
+    button_a_previously_pressed = True
+    button_b_previously_pressed = True
+    button_up_previously_pressed = True
+    button_down_previously_pressed = True
+    function_id = 0
+
+    # Create UI loop
+    while True:
+        # Print instructions
+        controller.screen.clear_screen()
+        controller.screen.set_cursor(1, 1)
+        controller.screen.print("Use up and down")
+        controller.screen.set_cursor(2, 1)
+        controller.screen.print("Select with A")
+
+        # Print current menu information
+        controller.screen.set_cursor(3, 1)
+        controller.screen.print(
+            str(function_id + 1) + "/" + str(len(low_level_functions))
+        )
+        controller.screen.set_cursor(4, 1)
+        controller.screen.print(low_level_functions[function_id][0])
+
+        # Check for button up pressed
+        if controller.buttonUp.pressing() and not button_up_previously_pressed:
+            function_id -= 1
+            function_id = max(function_id, 0)
+
+        # Check for button down pressed
+        if controller.buttonDown.pressing() and not button_down_previously_pressed:
+            function_id += 1
+            if function_id >= len(low_level_functions):
+                function_id = len(low_level_functions) - 1
+
+        # Check for button A or B pressed
+        if (controller.buttonA.pressing() and not button_a_previously_pressed) or (
+            controller.buttonB.pressing() and not button_b_previously_pressed
+        ):
+            break
+
+        # Update states
+        button_a_previously_pressed = controller.buttonA.pressing()
+        button_b_previously_pressed = controller.buttonB.pressing()
+        button_up_previously_pressed = controller.buttonUp.pressing()
+        button_down_previously_pressed = controller.buttonDown.pressing()
+
+        # Limit to 50hz
+        wait(20)
+
+    # Check which button was pressed
+    if controller.buttonA.pressing() and not button_a_previously_pressed:
+        low_level_functions[function_id][1]()
+    else:
+        # Go back if B pressed
+        select_auto_test_mode()
+
+
 def test_drive_cm():
     distance = 10
     speed = 50
@@ -283,25 +437,5 @@ if __name__ == "__main__":
 
     if not testing:
         competition = Competition(user_control, autonomous)
-    elif testing:
-        brain.screen.clear_screen()
-        brain.screen.print("Currently in testing mode: user control")
-        wait(2000)
-        brain.screen.clear_screen()
-        brain.screen.print("A to drive, B for auto")
-        while True:
-            if controller.buttonA.pressing() or controller.buttonB.pressing():
-                break
-
-        if controller.buttonA.pressing():
-            user_control()
-        else:
-            controller.screen.clear_screen()
-            controller.screen.print("A: test low level functions")
-
-            while True:
-                if controller.buttonA.pressing():
-                    break
-
-            if controller.buttonA.pressing():
-                test_drive_cm()
+    else:
+        start_testing_mode()
