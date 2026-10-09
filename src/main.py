@@ -2,9 +2,36 @@ import math
 
 from vex import *
 
-
 DRIVE_WHEELS_DIAMETER: float = 10.16
 """Diameter in CM."""
+
+#########################
+### UTILITY FUNCTIONS ###
+#########################
+
+
+def check_in_range(
+    input_value: float,
+    greater_than: int | None = None,
+    less_than: int | None = None,
+    greater_than_or_equals: bool = False,
+    less_that_or_equals: bool = False,
+) -> None:
+    # Check if outside greater than restrictions
+    if greater_than_or_equals:
+        if greater_than is not None and input_value >= greater_than:
+            raise ValueError()
+    else:
+        if greater_than is not None and input_value > greater_than:
+            raise ValueError()
+
+    # Check if outside less than restrictions
+    if less_that_or_equals:
+        if less_than is not None and input_value <= less_than:
+            raise ValueError()
+    else:
+        if less_than is not None and input_value < less_than:
+            raise ValueError()
 
 
 ######################
@@ -79,11 +106,12 @@ def get_rotations_from_distance(distance: float, wheel_diameter: float) -> float
         raise ValueError("The distance cannot be negative")
 
     if wheel_diameter < 0:
-        raise ValueError("The wheel diameter cannot be nagetive")
+        raise ValueError("The wheel diameter cannot be negative")
 
     circumference = wheel_diameter * math.pi
     rotations = distance / circumference
     return round(rotations, 3)
+
 
 ############################
 ### AUTONOMOUS FUNCTIONS ###
@@ -92,6 +120,7 @@ def get_rotations_from_distance(distance: float, wheel_diameter: float) -> float
 
 def autonomous() -> None:
     """Control all functionality required for the autonomous period."""
+
 
 def drive_cm(distance: float, speed: float) -> None:
     """Drive a distance at a set speed.
@@ -183,9 +212,11 @@ def user_control() -> None:
         # Limit loop speed at 50hz
         wait(20 - timer.time())
 
+
 ####################
 ### TESTING MODE ###
 ####################
+
 
 def test_drive_cm():
     distance = 10
@@ -201,7 +232,11 @@ def test_drive_cm():
         controller.screen.print("Testing " + str(distance) + "cm.")
 
         while True:
-            if controller.buttonX.pressing() or controller.buttonUp.pressing() or controller.buttonDown.pressing():
+            if (
+                controller.buttonX.pressing()
+                or controller.buttonUp.pressing()
+                or controller.buttonDown.pressing()
+            ):
                 break
 
         if controller.buttonUp.pressing():
@@ -221,7 +256,11 @@ def test_drive_cm():
         controller.screen.print("Testing " + str(speed) + "%")
 
         while True:
-            if controller.buttonA.pressing() or controller.buttonUp.pressing() or controller.buttonDown.pressing():
+            if (
+                controller.buttonA.pressing()
+                or controller.buttonUp.pressing()
+                or controller.buttonDown.pressing()
+            ):
                 break
 
         if controller.buttonUp.pressing():
@@ -230,6 +269,7 @@ def test_drive_cm():
             speed -= 5
         else:
             drive_cm(distance, speed)
+
 
 #####################
 ### STARTING CODE ###
