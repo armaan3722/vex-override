@@ -64,18 +64,8 @@ def get_motors_from_inputs(
         ValueError: If either throttle_input or steering_input is outside the
             range of -100 to 100.
     """
-    if throttle_input > 100 or throttle_input < -100:
-        raise ValueError(
-            "The throttle input is out of the required range of -100 - 100 ("
-            + str(throttle_input)
-            + ")"
-        )
-    if steering_input > 100 or steering_input < -100:
-        raise ValueError(
-            "The steering input is out of the required range of -100 - 100 ("
-            + str(steering_input)
-            + ")"
-        )
+    check_in_range(throttle_input, -100, 100, True, True)
+    check_in_range(steering_input, -100, 100, True, True)
 
     left_motor_speed = abs(throttle_input) + steering_input
     right_motor_speed = abs(throttle_input) - steering_input
@@ -102,12 +92,10 @@ def get_rotations_from_distance(distance: float, wheel_diameter: float) -> float
         ValueError: If distance or wheel_diameter are negative.
     """
     # Raise errors
-    if distance < 0:
-        raise ValueError("The distance cannot be negative")
+    check_in_range(distance, 0, None, True, True)
+    check_in_range(wheel_diameter, 0, None, True, True)
 
-    if wheel_diameter < 0:
-        raise ValueError("The wheel diameter cannot be negative")
-
+    # Calculate turns
     circumference = wheel_diameter * math.pi
     rotations = distance / circumference
     return round(rotations, 3)
@@ -133,12 +121,9 @@ def drive_cm(distance: float, speed: float) -> None:
         ValueError: If distance is negative or speed is outside of range (-100
             to 100)
     """
-    # Raise invalid argument errors
-    if distance < 0:
-        raise ValueError("The distance cannot be negative")
-
-    if speed < -100 or speed > 100:
-        raise ValueError("Speed must be between 100 and -100")
+    # Check input ranges
+    check_in_range(distance, 0, None, True, True)
+    check_in_range(speed, -100, 100, True, True)
 
     # Calculate rotations
     rotations = get_rotations_from_distance(distance, DRIVE_WHEELS_DIAMETER)

@@ -1,6 +1,6 @@
 import pytest
 
-from main import get_motors_from_inputs, get_rotations_from_distance, check_in_range
+from main import check_in_range, get_motors_from_inputs, get_rotations_from_distance
 
 
 @pytest.mark.parametrize(
@@ -14,7 +14,6 @@ from main import get_motors_from_inputs, get_rotations_from_distance, check_in_r
         (4.999, 5, None, True, False, True),
         (5, 5, None, True, False, False),
         (5.001, 5, None, True, False, False),
-
         # Exclusive max
         (4.999, None, 5, False, False, False),
         (5, None, 5, False, False, True),
@@ -23,13 +22,11 @@ from main import get_motors_from_inputs, get_rotations_from_distance, check_in_r
         (4.999, None, 5, False, True, False),
         (5, None, 5, False, True, False),
         (5.001, None, 5, False, True, True),
-
         # Test boundaryless
         (float("inf"), 5, None, False, False, False),
         (float("-inf"), None, 5, False, False, False),
         (float("inf"), None, None, False, False, False),
         (float("-inf"), None, None, False, False, False),
-
         # Test 2 bounds
         (0, -12, 5.3, True, False, False),
         (-12, -12, 5.3, True, False, False),
