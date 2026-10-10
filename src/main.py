@@ -219,6 +219,8 @@ def user_control() -> None:
 
 
 def start_testing_mode() -> None:
+    """Starts the mode for testing robot functionality, and routes between user
+    control or autonomous testing."""
     # Clear both screens
     brain.screen.clear_screen()
     controller.screen.clear_screen()
@@ -265,6 +267,11 @@ def start_testing_mode() -> None:
 
 
 def select_auto_test_mode() -> None:
+    """Lets user select which autonomous test mode to use.
+
+    Options will be between testing low level autonomous, high level
+    autonomous, or full routines.
+    """
     # Print info to screen
     controller.screen.clear_screen()
     controller.screen.set_cursor(1, 1)
@@ -296,6 +303,13 @@ def select_auto_test_mode() -> None:
 
 
 def select_low_level_function_test() -> None:
+    """Lets user select which low level function to test.
+
+    Uses predefined list of functions and labels to create a menu where the
+    user can scroll through function names and select one to test.  From there,
+    they will be routed to the testing menu for that specific function, as
+    defined in the initial list of functions.
+    """
     # Set list of functions
     low_level_functions = [("Drive CM", test_drive_cm)]
 
@@ -357,7 +371,9 @@ def select_low_level_function_test() -> None:
         select_auto_test_mode()
 
 
-def test_drive_cm():
+def test_drive_cm() -> None:
+    """Allows user to select distance and speed to test, and then calls
+    drive_cm with those values."""
     # Get distance
     distance_selected = get_numeric_value(25, 5, 0, None, "distance")
 
@@ -385,6 +401,27 @@ def get_numeric_value(
     maximum_value: float | None,
     value_name: str,
 ) -> float | None:
+    """Creates an interactive interface where the user can select a numeric
+    value.
+
+    Allows the user to press up and down arrows to increase or decrease the
+    value by the step given as a parameter.  Makes sure that this value remains
+    within the minimum and maximum specified value (both inclusive).  Checks
+    for button a or b to be pressed.  If a, it returns the selected value.  If
+    b, it returns None, to signify that the user wants to go back.  Runs this
+    UI loop at a 50hz speed.
+
+    Args:
+        default_value: The default value to set to at the start.
+        step: The amount to go up or down for each button press.
+        minimum_value: The minimum (inclusively) that the value can be.
+        maximum_value: The maximum (inclusively) that the value can be.
+        value_name: The name to print to the screen while selecting the value.
+
+    Returns:
+        The number selected if button A is pressed.  None if the user has
+            pressed button B, and didn't want to select a value.
+    """
     # Set default value
     selected_value = default_value
 
