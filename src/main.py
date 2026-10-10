@@ -30,7 +30,7 @@ def check_in_range(
             range.
 
     Raises:
-        ValueError: If input_value is outside the definend range.
+        ValueError: If input_value is outside the defined range.
     """
     # Check if outside greater than restrictions
     if min_inclusive:
@@ -154,7 +154,7 @@ def drive_cm(distance: float, speed: float) -> None:
 
 
 def control_drive() -> None:
-    """Do user control for the drivetrain."""
+    """Handle user control for the drivetrain."""
     # Get amounts to move each motor
     left_motor_speed, right_motor_speed = get_motors_from_inputs(
         controller.axis3.position(), controller.axis1.position()
@@ -174,7 +174,7 @@ def control_drive() -> None:
 
 
 def control_arm() -> None:
-    """Control the arm and claw connected to the arm."""
+    """Handle user control the arm and claw connected to the arm."""
     if controller.buttonUp.pressing() and not controller.buttonDown.pressing():
         claw_arm_motor.spin(FORWARD, 25, PERCENT)
     elif controller.buttonDown.pressing() and not controller.buttonUp.pressing():
@@ -191,7 +191,7 @@ def control_arm() -> None:
 
 
 def user_control() -> None:
-    """Control all functionality required for the user control period."""
+    """Handle all functionality required for the user control period."""
     # Create timer object
     timer = Timer()
 
@@ -358,56 +358,83 @@ def select_low_level_function_test() -> None:
 
 
 def test_drive_cm():
-    distance = 10
-    speed = 50
+    # Get distance
+    distance_selected = get_numeric_value(25, 5, 0, None, "distance")
 
+    # Go back if back button was pressed
+    if distance_selected is None:
+        select_low_level_function_test()
+        return
+
+    # Get speed
+    speed_selected = get_numeric_value(50, 5, -100, 100, "speed")
+
+    # Go back if back button was pressed
+    if speed_selected is None:
+        test_drive_cm()
+        return
+
+    # Run drive cm with selected values
+    drive_cm(distance_selected, speed_selected)
+
+
+def get_numeric_value(
+    default_value: float,
+    step: float,
+    minimum_value: float | None,
+    maximum_value: float | None,
+    value_name: str,
+) -> float | None:
+    # Set default value
+    selected_value = default_value
+
+    # Create state tracking variables
+    button_a_previously_pressed = True
+    button_b_previously_pressed = True
+    button_up_previously_pressed = True
+    button_down_previously_pressed = True
+
+    # Start ui loop
     while True:
+        # Print info
         controller.screen.clear_screen()
         controller.screen.set_cursor(1, 1)
-        controller.screen.print("Use up and down to set distance.")
+        controller.screen.print("Up and down to set.")
         controller.screen.set_cursor(2, 1)
-        controller.screen.print("Press X to start test.")
+        controller.screen.print("A to select.")
         controller.screen.set_cursor(3, 1)
-        controller.screen.print("Testing " + str(distance) + "cm.")
+        controller.screen.print(value_name)
+        controller.screen.set_cursor(4, 1)
+        controller.screen.print("Current: " + str(selected_value))
 
-        while True:
-            if (
-                controller.buttonX.pressing()
-                or controller.buttonUp.pressing()
-                or controller.buttonDown.pressing()
-            ):
-                break
+        # Check if up pressed
+        if controller.buttonUp.pressing() and not button_up_previously_pressed:
+            selected_value += step
+            if maximum_value is not None and selected_value > maximum_value:
+                selected_value = maximum_value
 
-        if controller.buttonUp.pressing():
-            distance += 5
-        elif controller.buttonDown.pressing():
-            distance -= 5
-        else:
-            break
+        # Check if down pressed
+        if controller.buttonDown.pressing() and not button_down_previously_pressed:
+            selected_value -= step
+            if minimum_value is not None and selected_value < minimum_value:
+                selected_value = minimum_value
 
-    while True:
-        controller.screen.clear_screen()
-        controller.screen.set_cursor(1, 1)
-        controller.screen.print("Use up and down to set speed.")
-        controller.screen.set_cursor(2, 1)
-        controller.screen.print("Press A to start test.")
-        controller.screen.set_cursor(3, 1)
-        controller.screen.print("Testing " + str(speed) + "%")
+        # Check if button a pressed
+        if controller.buttonA.pressing() and not button_a_previously_pressed:
+            return selected_value
 
-        while True:
-            if (
-                controller.buttonA.pressing()
-                or controller.buttonUp.pressing()
-                or controller.buttonDown.pressing()
-            ):
-                break
+        # Check if button b pressed
+        if controller.buttonB.pressing() and not button_b_previously_pressed:
+            return None
 
-        if controller.buttonUp.pressing():
-            speed += 5
-        elif controller.buttonDown.pressing():
-            speed -= 5
-        else:
-            drive_cm(distance, speed)
+        # Update states
+        button_a_previously_pressed = controller.buttonA.pressing()
+        button_b_previously_pressed = controller.buttonB.pressing()
+        button_up_previously_pressed = controller.buttonUp.pressing()
+        button_down_previously_pressed = controller.buttonDown.pressing()
+
+        # Limit UI to 50hz
+        wait(20)
 
 
 #####################
