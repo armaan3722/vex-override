@@ -98,10 +98,10 @@ def get_rotations_from_distance(distance: float, wheel_diameter: float) -> float
 
     Args:
         distance: The distance to travel.
-        wheel_diameter: The diameter of the wheels
+        wheel_diameter: The diameter of the wheels.
 
     Returns:
-        The amount of rotations to achieve the desired distance
+        The amount of rotations to achieve the desired distance, rounded to 3 digits.
 
     Raises:
         ValueError: If distance or wheel_diameter are negative.

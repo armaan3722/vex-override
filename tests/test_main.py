@@ -91,16 +91,14 @@ def test_get_motors_from_inputs_valid(throttle_input, steering_input, expected):
 @pytest.mark.parametrize(
     "throttle_input, steering_input",
     [
-        (200, 0),
-        (100.01, 0),
-        (-200, 0),
-        (-100.01, 0),
-        (0, 200),
-        (0, 100.01),
-        (0, -200),
-        (0, -100.01),
-        (200, -300),
-        (-100.01, 100.01),
+        (101, 0),
+        (-101, 0),
+        (0, 101),
+        (0, -101),
+        (101, 101),
+        (100, -101),
+        (-101, 101),
+        (-101, -101)
     ],
 )
 def test_get_motors_from_inputs_value_error(throttle_input, steering_input):
@@ -110,13 +108,25 @@ def test_get_motors_from_inputs_value_error(throttle_input, steering_input):
 
 @pytest.mark.parametrize(
     "distance, diameter, expected",
-    [(50, 50, 0.318), (100, 100, 0.318), (50, 100, 0.159)],
+    [
+        (100, 10, 3.183),
+        (0, 15.3, 0),
+        (0.01, 0.03, 0.106),
+        (1234.56, 6543.21, 0.06),
+        (1234, 0.01, 39279.44)
+    ],
 )
 def test_get_rotations_from_distance(distance, diameter, expected):
     assert get_rotations_from_distance(distance, diameter) == expected
 
 
-@pytest.mark.parametrize("distance, diameter", [(-100, 100), (100, -100), (-100, -100)])
+@pytest.mark.parametrize("distance, diameter",
+    [
+        (-1, 1),
+        (1, -1),
+        (-1, -1)
+    ]
+)
 def test_get_rotations_from_distance_value_error(distance, diameter):
     with pytest.raises(ValueError):
         get_rotations_from_distance(distance, diameter)
