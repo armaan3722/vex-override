@@ -1,6 +1,6 @@
 [project]
 name = "vex-override"
-version = "0.1.0"
+version = "0.2.0"
 description = "Add your description here"
 readme = "README.md"
 authors = [
@@ -17,10 +17,13 @@ dev = [
 ]
 
 [tool.ruff]
-extend-exclude = ["src/vex/", "temp"]
+extend-exclude = [".stubs/"]
 
 [tool.ty.src]
-exclude = ["src/vex/", "temp"]
+exclude = [".stubs/"]
+
+[tool.ty.environment]
+extra-paths = [".stubs/"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
