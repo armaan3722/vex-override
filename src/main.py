@@ -144,9 +144,6 @@ def drive_cm(distance: float, speed: float) -> None:
     rotations = get_rotations_from_distance(distance, DRIVE_WHEELS_DIAMETER)
 
     # Spin motors
-    controller.screen.clear_screen()
-    controller.screen.set_cursor(1, 1)
-    controller.screen.print(speed)
     if speed > 0:
         left_drive_motor.spin_for(FORWARD, rotations, TURNS, speed, PERCENT, False)
         right_drive_motor.spin_for(FORWARD, rotations, TURNS, speed, PERCENT, True)
