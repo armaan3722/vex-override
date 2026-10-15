@@ -221,20 +221,26 @@ def user_control() -> None:
 ### TESTING MODE ###
 ####################
 
+
+def do_nothing_callback() -> None:
+    pass
+
+
 def disable_event_listeners() -> None:
     """Disables button event listeners.
 
     Disables event listeners for buttonA, buttonB, buttonUp, and buttonDown.
     """
-    controller.buttonA.pressed(None)
-    controller.buttonB.pressed(None)
-    controller.buttonUp.pressed(None)
-    controller.buttonDown.pressed(None)
+    controller.buttonA.pressed(do_nothing_callback)
+    controller.buttonB.pressed(do_nothing_callback)
+    controller.buttonUp.pressed(do_nothing_callback)
+    controller.buttonDown.pressed(do_nothing_callback)
 
 
 class SelectionHandler:
     """Handles creating a numerical selection menu."""
-    test_menu_data = {}
+
+    test_menu_data = {}  # noqa: RUF012
     """This is the master dictionary with all data saved for test mode menus.
     The keys should be in the following format:
 
@@ -243,7 +249,17 @@ class SelectionHandler:
     Where test_function_name is the final function of the menu, and property_name
     is the name of the property to store."""
 
-    def __init__(self, min_value: float, max_value: float, step: float, default_value: float, name: str, test_function_name: str, next_function, previous_function) -> None:
+    def __init__(
+        self,
+        min_value: float,
+        max_value: float,
+        step: float,
+        default_value: float,
+        name: str,
+        test_function_name: str,
+        next_function,
+        previous_function,
+    ) -> None:
         """Initialize the SelectionHandler object.
 
         Args:
@@ -280,8 +296,7 @@ class SelectionHandler:
     def add_number(self) -> None:
         """Add step to the current value, but stay below the maximum value."""
         self.current_value += self.step
-        if self.current_value > self.max_value:
-            self.current_value = self.max_value
+        self.current_value = min(self.current_value, self.max_value)
         SelectionHandler.test_menu_data[self.full_key] = self.current_value
         self.print_info()
 
@@ -290,8 +305,7 @@ class SelectionHandler:
         value.
         """
         self.current_value -= self.step
-        if self.current_value < self.min_value:
-            self.current_value = self.min_value
+        self.current_value = max(self.current_value, self.min_value)
         SelectionHandler.test_menu_data[self.full_key] = self.current_value
         self.print_info()
 
@@ -324,6 +338,7 @@ class SelectionHandler:
         controller.screen.print(self.name)
         controller.screen.set_cursor(2, 1)
         controller.screen.print(self.current_value)
+
 
 def start_testing_mode() -> None:
     """Starts the mode for testing robot functionality, and routes between user
@@ -480,19 +495,33 @@ def select_low_level_function_test() -> None:
         # Go back if B pressed
         select_auto_test_mode()
 
+
 def test_drive_cm_a_distance_menu() -> None:
     """Get the distance for test_drive_cm"""
     # Start menu
-    menu = SelectionHandler(0, 100, 5, 25, "distance", "test_drive_cm", test_drive_cm_b_speed_menu, select_low_level_function_test)
+    menu = SelectionHandler(
+        0,
+        100,
+        5,
+        25,
+        "distance",
+        "test_drive_cm",
+        test_drive_cm_b_speed_menu,
+        select_low_level_function_test,
+    )
     menu.print_info()
     menu.start_event_listeners()
+
 
 def test_drive_cm_b_speed_menu() -> None:
     """Get the speed for test_drive_cm"""
     # Start menu
-    menu = SelectionHandler(-100, 100, 5, 25, "speed", "test_drive_cm", None, test_drive_cm_a_distance_menu)
+    menu = SelectionHandler(
+        -100, 100, 5, 25, "speed", "test_drive_cm", None, test_drive_cm_a_distance_menu
+    )
     menu.print_info()
     menu.start_event_listeners()
+
 
 def test_drive_cm() -> None:
     """Run drive_cm with the selected values."""
@@ -523,6 +552,7 @@ def test_drive_cm() -> None:
 
         # Set to 50hz loop
         wait(20)
+
 
 def test_drive_cm_deprecated() -> None:
     """**Deprecated**
