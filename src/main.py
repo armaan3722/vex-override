@@ -145,11 +145,23 @@ def drive_cm(distance: float, speed: float) -> None:
 
     # Spin motors
     if speed > 0:
-        left_drive_motor.spin_for(FORWARD, rotations, TURNS, speed, PERCENT, False)
-        right_drive_motor.spin_for(FORWARD, rotations, TURNS, speed, PERCENT, True)
+        left_front_drive_motor.spin_for(
+            FORWARD, rotations, TURNS, speed, PERCENT, False
+        )
+        left_rear_drive_motor.spin_for(FORWARD, rotations, TURNS, speed, PERCENT, False)
+        right_front_drive_motor.spin_for(
+            FORWARD, rotations, TURNS, speed, PERCENT, False
+        )
+        right_rear_drive_motor.spin_for(FORWARD, rotations, TURNS, speed, PERCENT, True)
     else:
-        left_drive_motor.spin_for(REVERSE, rotations, TURNS, speed, PERCENT, False)
-        right_drive_motor.spin_for(REVERSE, rotations, TURNS, speed, PERCENT, True)
+        left_front_drive_motor.spin_for(
+            REVERSE, rotations, TURNS, speed, PERCENT, False
+        )
+        left_rear_drive_motor.spin_for(REVERSE, rotations, TURNS, speed, PERCENT, False)
+        right_front_drive_motor.spin_for(
+            REVERSE, rotations, TURNS, speed, PERCENT, False
+        )
+        right_rear_drive_motor.spin_for(REVERSE, rotations, TURNS, speed, PERCENT, True)
 
 
 ##############################
@@ -166,15 +178,19 @@ def control_drive() -> None:
 
     # Control left motor
     if left_motor_speed == 0:
-        left_drive_motor.stop()
+        left_front_drive_motor.stop()
+        left_rear_drive_motor.stop()
     else:
-        left_drive_motor.spin(FORWARD, left_motor_speed, PERCENT)
+        left_front_drive_motor.spin(FORWARD, left_motor_speed, PERCENT)
+        left_rear_drive_motor.spin(FORWARD, left_motor_speed, PERCENT)
 
     # Control right motor
     if right_motor_speed == 0:
-        right_drive_motor.stop()
+        right_front_drive_motor.stop()
+        right_rear_drive_motor.stop()
     else:
-        right_drive_motor.spin(FORWARD, right_motor_speed, PERCENT)
+        right_front_drive_motor.spin(FORWARD, right_motor_speed, PERCENT)
+        right_rear_drive_motor.spin(FORWARD, right_motor_speed, PERCENT)
 
 
 def control_arm() -> None:
@@ -676,10 +692,10 @@ if __name__ == "__main__":
     # Create objects
     brain = Brain()
     controller = Controller(PRIMARY)
-    right_drive_motor: Motor = Motor(Ports.PORT1, GearSetting.RATIO_18_1, True)
-    """The drive motor on the right, rotating forward is aligned to forward movement."""
-    left_drive_motor: Motor = Motor(Ports.PORT2, GearSetting.RATIO_18_1, False)
-    """The drive motor on the left, rotating forward is aligned to forward movement."""
+    right_front_drive_motor: Motor = Motor(Ports.PORT1, GearSetting.RATIO_18_1, False)
+    right_rear_drive_motor: Motor = Motor(Ports.PORT3, GearSetting.RATIO_18_1, False)
+    left_front_drive_motor: Motor = Motor(Ports.PORT2, GearSetting.RATIO_18_1, True)
+    left_rear_drive_motor: Motor = Motor(Ports.PORT4, GearSetting.RATIO_18_1, True)
     claw_motor: Motor = Motor(Ports.PORT6, GearSetting.RATIO_18_1, True)
     """The motor that opens and closes the claw, forward will open claw."""
     claw_arm_motor: Motor = Motor(Ports.PORT8, GearSetting.RATIO_18_1, True)
