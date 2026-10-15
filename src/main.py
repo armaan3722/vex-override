@@ -436,7 +436,7 @@ def select_low_level_function_test() -> None:
     """
     # Set list of functions
     # Switch this to test_drive_cm_deprecated if not working
-    low_level_functions = [("Drive CM", test_drive_cm)]
+    low_level_functions = [("Drive CM", test_drive_cm_a_distance_menu)]
 
     # Define state variables
     button_a_previously_pressed = True
