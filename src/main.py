@@ -2,8 +2,18 @@ import math
 
 from vex import *
 
+# Define constants
 DRIVE_WHEELS_DIAMETER: float = 10.16
 """Diameter in CM."""
+
+def do_nothing_callback() -> None:
+    """A callback that does nothing."""
+
+# Define event listener control functions
+on_button_a_press = do_nothing_callback
+on_button_b_press = do_nothing_callback
+on_button_up_press = do_nothing_callback
+on_button_down_press = do_nothing_callback
 
 #########################
 ### UTILITY FUNCTIONS ###
@@ -238,20 +248,20 @@ def user_control() -> None:
 ####################
 
 
-def do_nothing_callback() -> None:
-    pass
-
-
 def disable_event_listeners() -> None:
     """Disables button event listeners.
 
     Disables event listeners for buttonA, buttonB, buttonUp, and buttonDown.
     """
-    controller.buttonA.pressed(do_nothing_callback)
-    controller.buttonB.pressed(do_nothing_callback)
-    controller.buttonUp.pressed(do_nothing_callback)
-    controller.buttonDown.pressed(do_nothing_callback)
+    global on_button_a_press
+    global on_button_b_press
+    global on_button_up_press
+    global on_button_down_press
 
+    on_button_a_press = do_nothing_callback
+    on_button_b_press = do_nothing_callback
+    on_button_up_press = do_nothing_callback
+    on_button_down_press = do_nothing_callback
 
 class SelectionHandler:
     """Handles creating a numerical selection menu."""
@@ -327,10 +337,15 @@ class SelectionHandler:
 
     def start_event_listeners(self) -> None:
         """Creates event listeners for controller buttons."""
-        controller.buttonUp.pressed(self.add_number)
-        controller.buttonDown.pressed(self.subtract_number)
-        controller.buttonA.pressed(self.next_menu)
-        controller.buttonB.pressed(self.previous_menu)
+        global on_button_a_press
+        global on_button_b_press
+        global on_button_up_press
+        global on_button_down_press
+
+        on_button_a_press = self.add_number
+        on_button_b_press = self.subtract_number
+        on_button_up_press = self.next_menu
+        on_button_down_press = self.previous_menu
 
     def next_menu(self) -> None:
         """Move to the next menu."""
@@ -370,6 +385,12 @@ def start_testing_mode() -> None:
     controller.screen.print("Testing mode")
 
     wait(2, SECONDS)
+
+    # Create event listeners
+    controller.buttonA.pressed(on_button_a_press)
+    controller.buttonB.pressed(on_button_b_press)
+    controller.buttonUp.pressed(on_button_up_press)
+    controller.buttonDown.pressed(on_button_down_press)
 
     # Print menu information
     controller.screen.clear_screen()
