@@ -287,6 +287,7 @@ class Selection:
             self.current_value = default_value
             Selection.test_menu_data[self.key] = self.current_value
 
+
 class NumericalSelect(Selection):
     """Handles creating a numerical selection menu."""
 
@@ -497,35 +498,18 @@ def select_auto_test_mode() -> None:
     Options will be between testing low level autonomous, high level
     autonomous, or full routines.
     """
-    # Print info to screen
-    controller.screen.clear_screen()
-    controller.screen.set_cursor(1, 1)
-    controller.screen.print("A for low level")
+    # Define lists
+    list_of_choices = [
+        "Low level"
+    ]
+    list_of_functions = [
+        select_low_level_function_test
+    ]
 
-    # Create state tracking variables
-    button_a_previously_pressed = True
-    button_b_previously_pressed = True
-
-    # Wait for button press
-    while True:
-        if (controller.buttonA.pressing() and not button_a_previously_pressed) or (
-            controller.buttonB.pressing() and not button_b_previously_pressed
-        ):
-            break
-
-        # Update state
-        button_a_previously_pressed = controller.buttonA.pressing()
-
-        # Limit to 50hz
-        wait(20)
-
-    # Run correct functions
-    if controller.buttonA.pressing() and not button_a_previously_pressed:
-        select_low_level_function_test()
-    else:
-        # Runs if B pressed, goes back
-        start_testing_mode()
-
+    # Create object and start event listeners
+    menu = ListSelect(list_of_choices, list_of_functions, 0, "auto_mode", "start_testing_mode", start_testing_mode)
+    menu.print_info()
+    menu.start_event_listeners()
 
 def select_low_level_function_test() -> None:
     """Lets user select which low level function to test.
@@ -535,66 +519,21 @@ def select_low_level_function_test() -> None:
     they will be routed to the testing menu for that specific function, as
     defined in the initial list of functions.
     """
-    # Set list of functions
-    # Switch this to test_drive_cm_deprecated if not working
-    low_level_functions = [("Drive CM", test_drive_cm_a_distance_menu)]
+    # Define variables
+    list_of_choices = ["Drive CM"]
+    list_of_functions = [test_drive_cm_a_distance_menu]
 
-    # Define state variables
-    button_a_previously_pressed = True
-    button_b_previously_pressed = True
-    button_up_previously_pressed = True
-    button_down_previously_pressed = True
-    function_id = 0
-
-    # Create UI loop
-    while True:
-        # Print instructions
-        controller.screen.clear_screen()
-        controller.screen.set_cursor(1, 1)
-        controller.screen.print("Use up and down")
-        controller.screen.set_cursor(2, 1)
-        controller.screen.print("Select with A")
-
-        # Print current menu information
-        controller.screen.set_cursor(3, 1)
-        controller.screen.print(
-            str(function_id + 1) + "/" + str(len(low_level_functions))
-        )
-        controller.screen.set_cursor(4, 1)
-        controller.screen.print(low_level_functions[function_id][0])
-
-        # Check for button up pressed
-        if controller.buttonUp.pressing() and not button_up_previously_pressed:
-            function_id -= 1
-            function_id = max(function_id, 0)
-
-        # Check for button down pressed
-        if controller.buttonDown.pressing() and not button_down_previously_pressed:
-            function_id += 1
-            if function_id >= len(low_level_functions):
-                function_id = len(low_level_functions) - 1
-
-        # Check for button A or B pressed
-        if (controller.buttonA.pressing() and not button_a_previously_pressed) or (
-            controller.buttonB.pressing() and not button_b_previously_pressed
-        ):
-            break
-
-        # Update states
-        button_a_previously_pressed = controller.buttonA.pressing()
-        button_b_previously_pressed = controller.buttonB.pressing()
-        button_up_previously_pressed = controller.buttonUp.pressing()
-        button_down_previously_pressed = controller.buttonDown.pressing()
-
-        # Limit to 50hz
-        wait(20)
-
-    # Check which button was pressed
-    if controller.buttonA.pressing() and not button_a_previously_pressed:
-        low_level_functions[function_id][1]()
-    else:
-        # Go back if B pressed
-        select_auto_test_mode()
+    # Create object and start event listeners
+    menu = ListSelect(
+        list_of_choices,
+        list_of_functions,
+        0,
+        "low_level_test",
+        "start_testing_mode",
+        select_auto_test_mode,
+    )
+    menu.print_info()
+    menu.start_event_listeners()
 
 
 def test_drive_cm_a_distance_menu() -> None:
