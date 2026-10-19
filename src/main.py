@@ -253,8 +253,8 @@ def disable_event_listeners() -> None:
     controller.buttonDown.pressed(do_nothing_callback)
 
 
-class SelectionHandler:
-    """Handles creating a numerical selection menu."""
+class Selection:
+    """A parent class that has functions that all selection types need."""
 
     test_menu_data = {}  # noqa: RUF012
     """This is the master dictionary with all data saved for test mode menus.
@@ -264,6 +264,31 @@ class SelectionHandler:
 
     Where test_function_name is the final function of the menu, and property_name
     is the name of the property to store."""
+
+    def __init__(self, default_value: float, test_function_name, name: str) -> None:
+        """Initialize the Selection object.
+
+        Args:
+            default_value: The default value to set if menu has not been
+                reached yet.
+            test_function_name: The name of the function being tested, used to
+                generate unique keys for the master dictionary.
+            name: The name of display on the screen and to use for the key in
+                the master dictionary.
+        """
+        # Set instance variables
+        self.name = name
+        self.key = test_function_name + "_" + name
+
+        # Set current value to the correct value
+        if self.key in Selection.test_menu_data:
+            self.current_value = Selection.test_menu_data[self.key]
+        else:
+            self.current_value = default_value
+            Selection.test_menu_data[self.key] = self.current_value
+
+class NumericalSelect(Selection):
+    """Handles creating a numerical selection menu."""
 
     def __init__(
         self,
@@ -290,30 +315,21 @@ class SelectionHandler:
             next_function: The function to call if button A is pressed.
             previous_function: The function to call if button B is pressed.
         """
+        # Call super init
+        super().__init__(default_value, test_function_name, name)
+
         # Create all instance variables.
         self.min_value = min_value
         self.max_value = max_value
         self.step = step
-        self.name = name
-        self.test_function_name = test_function_name
         self.next_function = next_function
         self.previous_function = previous_function
-
-        # Get full key name
-        self.full_key = test_function_name + "_" + name
-
-        # Set current value to the correct value
-        if self.full_key in SelectionHandler.test_menu_data:
-            self.current_value = SelectionHandler.test_menu_data[self.full_key]
-        else:
-            self.current_value = default_value
-            SelectionHandler.test_menu_data[self.full_key] = self.current_value
 
     def add_number(self) -> None:
         """Add step to the current value, but stay below the maximum value."""
         self.current_value += self.step
         self.current_value = min(self.current_value, self.max_value)
-        SelectionHandler.test_menu_data[self.full_key] = self.current_value
+        Selection.test_menu_data[self.key] = self.current_value
         self.print_info()
 
     def subtract_number(self) -> None:
@@ -322,15 +338,8 @@ class SelectionHandler:
         """
         self.current_value -= self.step
         self.current_value = max(self.current_value, self.min_value)
-        SelectionHandler.test_menu_data[self.full_key] = self.current_value
+        Selection.test_menu_data[self.key] = self.current_value
         self.print_info()
-
-    def start_event_listeners(self) -> None:
-        """Creates event listeners for controller buttons."""
-        controller.buttonUp.pressed(self.add_number)
-        controller.buttonDown.pressed(self.subtract_number)
-        controller.buttonA.pressed(self.next_menu)
-        controller.buttonB.pressed(self.previous_menu)
 
     def next_menu(self) -> None:
         """Move to the next menu."""
@@ -344,6 +353,13 @@ class SelectionHandler:
             disable_event_listeners()
             self.previous_function()
 
+    def start_event_listeners(self) -> None:
+        """Creates event listeners for controller buttons."""
+        controller.buttonUp.pressed(self.add_number)
+        controller.buttonDown.pressed(self.subtract_number)
+        controller.buttonA.pressed(self.next_menu)
+        controller.buttonB.pressed(self.previous_menu)
+
     def print_info(self) -> None:
         """Print all info to the controller screen."""
         # Clear screen
@@ -354,6 +370,75 @@ class SelectionHandler:
         controller.screen.print(self.name)
         controller.screen.set_cursor(2, 1)
         controller.screen.print(self.current_value)
+
+
+class ListSelect(Selection):
+    """Handles creating a list selection menu."""
+
+    def __init__(
+        self,
+        list_of_choices,
+        list_of_functions,
+        default_value,
+        name,
+        test_function_name,
+        previous_function,
+    ) -> None:
+        """Initialize the ListSelect object."""
+        # Call super method
+        super().__init__(default_value, test_function_name, name)
+
+        # Assign instance variables
+        self.list_of_choices = list_of_choices
+        self.list_of_functions = list_of_functions
+        self.previous_function = previous_function
+
+    def next_option(self) -> None:
+        """Move to the next option."""
+        self.current_value += 1
+        if self.current_value >= len(self.list_of_choices):
+            self.current_value = len(self.list_of_choices) - 1
+        Selection.test_menu_data[self.key] = self.current_value
+        self.print_info()
+
+    def previous_option(self) -> None:
+        """Move to the previous option."""
+        self.current_value -= 1
+        self.current_value = max(self.current_value, 0)
+        Selection.test_menu_data[self.key] = self.current_value
+        self.print_info()
+
+    def next_menu(self):
+        """Move to the next menu."""
+        if self.list_of_functions[self.current_value] is not None:
+            disable_event_listeners()
+            self.list_of_functions[self.current_value]()
+
+    def previous_menu(self):
+        """Move to the previous menu."""
+        if self.previous_function is not None:
+            disable_event_listeners()
+            self.previous_function()
+
+    def start_event_listeners(self) -> None:
+        """Start the event listeners."""
+        controller.buttonUp.pressed(self.next_option)
+        controller.buttonDown.pressed(self.previous_option)
+
+    def print_info(self):
+        """Print all info to the controller screen."""
+        # Clear screen
+        controller.screen.clear_screen()
+
+        # Print info
+        controller.screen.set_cursor(1, 1)
+        controller.screen.print(self.name)
+        controller.screen.set_cursor(2, 1)
+        controller.screen.print(self.list_of_choices[self.current_value])
+        controller.screen.set_cursor(3, 1)
+        controller.screen.print(
+            str(self.current_value + 1) + "/" + str(len(self.list_of_choices))
+        )
 
 
 def start_testing_mode() -> None:
@@ -515,7 +600,7 @@ def select_low_level_function_test() -> None:
 def test_drive_cm_a_distance_menu() -> None:
     """Get the distance for test_drive_cm"""
     # Start menu
-    menu = SelectionHandler(
+    menu = NumericalSelect(
         0,
         100,
         5,
@@ -532,7 +617,7 @@ def test_drive_cm_a_distance_menu() -> None:
 def test_drive_cm_b_speed_menu() -> None:
     """Get the speed for test_drive_cm"""
     # Start menu
-    menu = SelectionHandler(
+    menu = NumericalSelect(
         -100, 100, 5, 25, "speed", "test_drive_cm", None, test_drive_cm_a_distance_menu
     )
     menu.print_info()
@@ -542,8 +627,8 @@ def test_drive_cm_b_speed_menu() -> None:
 def test_drive_cm() -> None:
     """Run drive_cm with the selected values."""
     # Get data
-    distance = SelectionHandler.test_menu_data["test_drive_cm_distance"]
-    speed = SelectionHandler.test_menu_data["test_drive_cm_speed"]
+    distance = Selection.test_menu_data["test_drive_cm_distance"]
+    speed = Selection.test_menu_data["test_drive_cm_speed"]
 
     # TODO: Switch this to OOP with a start/back selection function
     # Print info
@@ -568,6 +653,7 @@ def test_drive_cm() -> None:
 
         # Set to 50hz loop
         wait(20)
+
 
 #####################
 ### STARTING CODE ###
