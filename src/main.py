@@ -5,6 +5,17 @@ from vex import *
 DRIVE_WHEELS_DIAMETER: float = 10.16
 """Diameter in CM."""
 
+def do_nothing_callback() -> None:
+    """A callback that does nothing."""
+
+on_button_presses = {
+    "button_a": do_nothing_callback,
+    "button_b": do_nothing_callback,
+    "button_up": do_nothing_callback,
+    "button_down": do_nothing_callback
+}
+"""What function should be run on button presses."""
+
 #########################
 ### UTILITY FUNCTIONS ###
 #########################
@@ -237,21 +248,47 @@ def user_control() -> None:
 ### TESTING MODE ###
 ####################
 
+def run_button_functions(button_pressed: str) -> None:
+    """Runs the correct functions based on on_button_presses dictionary.
 
-def do_nothing_callback() -> None:
-    pass
+    Args:
+        button_pressed: The button pressed.  This value should be a, b, up, or
+            down.
 
+    Raises:
+        ValueError: If button_pressed is not a, b, up, or down.
+    """
+    if button_pressed == "a":
+        on_button_presses["button_a"]()
+    elif button_pressed == "b":
+        on_button_presses["button_b"]()
+    elif button_pressed == "up":
+        on_button_presses["button_up"]()
+    elif button_pressed == "down":
+        on_button_presses["button_down"]()
+    else:
+        raise ValueError("Invalid button pressed.")
+
+def create_event_listeners() -> None:
+    """Creates event listeners for buttons.
+
+    Connects buttons A, B, Up, and Down to event listeners using the
+    run_button_functions function.
+    """
+    controller.buttonA.pressed(run_button_functions, ("a",))
+    controller.buttonB.pressed(run_button_functions, ("b",))
+    controller.buttonUp.pressed(run_button_functions, ("up",))
+    controller.buttonDown.pressed(run_button_functions, ("down",))
 
 def disable_event_listeners() -> None:
     """Disables button event listeners.
 
     Disables event listeners for buttonA, buttonB, buttonUp, and buttonDown.
     """
-    controller.buttonA.pressed(do_nothing_callback)
-    controller.buttonB.pressed(do_nothing_callback)
-    controller.buttonUp.pressed(do_nothing_callback)
-    controller.buttonDown.pressed(do_nothing_callback)
-
+    on_button_presses["button_a"] = do_nothing_callback
+    on_button_presses["button_b"] = do_nothing_callback
+    on_button_presses["button_up"] = do_nothing_callback
+    on_button_presses["button_down"] = do_nothing_callback
 
 class SelectionHandler:
     """Handles creating a numerical selection menu."""
@@ -327,10 +364,10 @@ class SelectionHandler:
 
     def start_event_listeners(self) -> None:
         """Creates event listeners for controller buttons."""
-        controller.buttonUp.pressed(self.add_number)
-        controller.buttonDown.pressed(self.subtract_number)
-        controller.buttonA.pressed(self.next_menu)
-        controller.buttonB.pressed(self.previous_menu)
+        on_button_presses["button_a"] = self.next_menu
+        on_button_presses["button_b"] = self.previous_menu
+        on_button_presses["button_up"] = self.add_number
+        on_button_presses["button_down"] = self.subtract_number
 
     def next_menu(self) -> None:
         """Move to the next menu."""
