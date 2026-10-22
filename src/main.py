@@ -258,18 +258,18 @@ def run_button_functions(button_pressed: str) -> None:
     Raises:
         ValueError: If button_pressed is not a, b, up, or down.
     """
-    controller.screen.clear_screen();controller.screen.set_cursor(1,1);controller.screen.print("test")
+    # Create temporary dictionary
     temp_dictionary = on_button_presses.copy()
     disable_event_listeners()
 
     if button_pressed == "a":
         temp_dictionary["button_a"]()
     elif button_pressed == "b":
-        on_button_presses["button_b"]()
+        temp_dictionary["button_b"]()
     elif button_pressed == "up":
-        on_button_presses["button_up"]()
+        temp_dictionary["button_up"]()
     elif button_pressed == "down":
-        on_button_presses["button_down"]()
+        temp_dictionary["button_down"]()
     else:
         raise ValueError("Invalid button pressed.")
 
@@ -279,7 +279,7 @@ def create_event_listeners() -> None:
     Connects buttons A, B, Up, and Down to event listeners using the
     run_button_functions function.
     """
-    controller.buttonA.pressed(temp_function)
+    controller.buttonA.pressed(run_button_functions, ("a",))
     controller.buttonB.pressed(run_button_functions, ("b",))
     controller.buttonUp.pressed(run_button_functions, ("up",))
     controller.buttonDown.pressed(run_button_functions, ("down",))
@@ -368,7 +368,6 @@ class SelectionHandler:
 
     def start_event_listeners(self) -> None:
         """Creates event listeners for controller buttons."""
-        global on_button_presses
         on_button_presses["button_a"] = self.next_menu
         on_button_presses["button_b"] = self.previous_menu
         on_button_presses["button_up"] = self.add_number
@@ -377,9 +376,7 @@ class SelectionHandler:
     def next_menu(self) -> None:
         """Move to the next menu."""
         if self.next_function is not None:
-            # disable_event_listeners()
             self.next_function()
-            # run_button_functions("a")
 
     def previous_menu(self) -> None:
         """Move to the previous menu."""
@@ -402,10 +399,10 @@ class SelectionHandler:
 def start_testing_mode() -> None:
     """Starts the mode for testing robot functionality, and routes between user
     control or autonomous testing."""
-    # controller.buttonA.pressed(run_button_functions, ("a",))
     # Clear both screens
     brain.screen.clear_screen()
     controller.screen.clear_screen()
+    create_event_listeners()
 
     # Print testing message
     brain.screen.set_cursor(1, 1)
@@ -550,17 +547,10 @@ def select_low_level_function_test() -> None:
 
     # Check which button was pressed
     if controller.buttonA.pressing() and not button_a_previously_pressed:
-        create_event_listeners()
         low_level_functions[function_id][1]()
     else:
         # Go back if B pressed
         select_auto_test_mode()
-
-
-def temp_function():
-    controller.screen.clear_screen()
-    controller.screen.set_cursor(1,1)
-    controller.screen.print("temp")
 
 def test_drive_cm_a_distance_menu() -> None:
     """Get the distance for test_drive_cm"""
@@ -571,16 +561,11 @@ def test_drive_cm_a_distance_menu() -> None:
         5,
         25,
         "distance",
-        "test_drive_cm",
-        temp_function,
-        select_low_level_function_test,
-    )
+"test_drive_cm",
+        test_drive_cm_b_speed_menu,
+        select_low_level_function_test)
     menu.print_info()
     menu.start_event_listeners()
-    # if on_button_presses["button_a"] == temp_function:
-    # controller.screen.clear_screen();controller.screen.set_cursor(1,1);controller.screen.print("test")
-    # run_button_functions("a")
-
 
 def test_drive_cm_b_speed_menu() -> None:
     """Get the speed for test_drive_cm"""
