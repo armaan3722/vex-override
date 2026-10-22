@@ -260,11 +260,12 @@ def run_button_functions(button_pressed: str) -> None:
     """
     # Create temporary dictionary
     temp_dictionary = on_button_presses.copy()
-    disable_event_listeners()
 
     if button_pressed == "a":
+        disable_event_listeners()
         temp_dictionary["button_a"]()
     elif button_pressed == "b":
+        disable_event_listeners()
         temp_dictionary["button_b"]()
     elif button_pressed == "up":
         temp_dictionary["button_up"]()
@@ -381,7 +382,6 @@ class SelectionHandler:
     def previous_menu(self) -> None:
         """Move to the previous menu."""
         if self.previous_function is not None:
-            disable_event_listeners()
             self.previous_function()
 
     def print_info(self) -> None:
@@ -561,7 +561,7 @@ def test_drive_cm_a_distance_menu() -> None:
         5,
         25,
         "distance",
-"test_drive_cm",
+        "test_drive_cm",
         test_drive_cm_b_speed_menu,
         select_low_level_function_test)
     menu.print_info()
@@ -571,7 +571,7 @@ def test_drive_cm_b_speed_menu() -> None:
     """Get the speed for test_drive_cm"""
     # Start menu
     menu = SelectionHandler(
-        -100, 100, 5, 25, "speed", "test_drive_cm", None, test_drive_cm_a_distance_menu
+        -100, 100, 5, 25, "speed", "test_drive_cm", test_drive_cm, test_drive_cm_a_distance_menu
     )
     menu.print_info()
     menu.start_event_listeners()
@@ -587,7 +587,7 @@ def test_drive_cm() -> None:
     # Print info
     controller.screen.clear_screen()
     controller.screen.set_cursor(1, 1)
-    controller.screen.print(distance + ", " + speed)
+    controller.screen.print(str(distance) + ", " + str(speed))
 
     # Create state variable
     button_a_previously_pressed = True
