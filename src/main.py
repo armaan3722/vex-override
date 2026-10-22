@@ -5,6 +5,17 @@ from vex import *
 DRIVE_WHEELS_DIAMETER: float = 10.16
 """Diameter in CM."""
 
+def do_nothing_callback() -> None:
+    """A callback that does nothing."""
+
+on_button_presses = {
+    "button_a": do_nothing_callback,
+    "button_b": do_nothing_callback,
+    "button_up": do_nothing_callback,
+    "button_down": do_nothing_callback
+}
+"""What function should be run on button presses."""
+
 #########################
 ### UTILITY FUNCTIONS ###
 #########################
@@ -237,21 +248,52 @@ def user_control() -> None:
 ### TESTING MODE ###
 ####################
 
+def run_button_functions(button_pressed: str) -> None:
+    """Runs the correct functions based on on_button_presses dictionary.
 
-def do_nothing_callback() -> None:
-    pass
+    Args:
+        button_pressed: The button pressed.  This value should be a, b, up, or
+            down.
 
+    Raises:
+        ValueError: If button_pressed is not a, b, up, or down.
+    """
+    # Create temporary dictionary
+    temp_dictionary = on_button_presses.copy()
+
+    if button_pressed == "a":
+        disable_event_listeners()
+        temp_dictionary["button_a"]()
+    elif button_pressed == "b":
+        disable_event_listeners()
+        temp_dictionary["button_b"]()
+    elif button_pressed == "up":
+        temp_dictionary["button_up"]()
+    elif button_pressed == "down":
+        temp_dictionary["button_down"]()
+    else:
+        raise ValueError("Invalid button pressed.")
+
+def create_event_listeners() -> None:
+    """Creates event listeners for buttons.
+
+    Connects buttons A, B, Up, and Down to event listeners using the
+    run_button_functions function.
+    """
+    controller.buttonA.pressed(run_button_functions, ("a",))
+    controller.buttonB.pressed(run_button_functions, ("b",))
+    controller.buttonUp.pressed(run_button_functions, ("up",))
+    controller.buttonDown.pressed(run_button_functions, ("down",))
 
 def disable_event_listeners() -> None:
     """Disables button event listeners.
 
     Disables event listeners for buttonA, buttonB, buttonUp, and buttonDown.
     """
-    controller.buttonA.pressed(do_nothing_callback)
-    controller.buttonB.pressed(do_nothing_callback)
-    controller.buttonUp.pressed(do_nothing_callback)
-    controller.buttonDown.pressed(do_nothing_callback)
-
+    on_button_presses["button_a"] = do_nothing_callback
+    on_button_presses["button_b"] = do_nothing_callback
+    on_button_presses["button_up"] = do_nothing_callback
+    on_button_presses["button_down"] = do_nothing_callback
 
 class SelectionHandler:
     """Handles creating a numerical selection menu."""
@@ -327,21 +369,19 @@ class SelectionHandler:
 
     def start_event_listeners(self) -> None:
         """Creates event listeners for controller buttons."""
-        controller.buttonUp.pressed(self.add_number)
-        controller.buttonDown.pressed(self.subtract_number)
-        controller.buttonA.pressed(self.next_menu)
-        controller.buttonB.pressed(self.previous_menu)
+        on_button_presses["button_a"] = self.next_menu
+        on_button_presses["button_b"] = self.previous_menu
+        on_button_presses["button_up"] = self.add_number
+        on_button_presses["button_down"] = self.subtract_number
 
     def next_menu(self) -> None:
         """Move to the next menu."""
         if self.next_function is not None:
-            disable_event_listeners()
             self.next_function()
 
     def previous_menu(self) -> None:
         """Move to the previous menu."""
         if self.previous_function is not None:
-            disable_event_listeners()
             self.previous_function()
 
     def print_info(self) -> None:
@@ -362,6 +402,7 @@ def start_testing_mode() -> None:
     # Clear both screens
     brain.screen.clear_screen()
     controller.screen.clear_screen()
+    create_event_listeners()
 
     # Print testing message
     brain.screen.set_cursor(1, 1)
@@ -511,7 +552,6 @@ def select_low_level_function_test() -> None:
         # Go back if B pressed
         select_auto_test_mode()
 
-
 def test_drive_cm_a_distance_menu() -> None:
     """Get the distance for test_drive_cm"""
     # Start menu
@@ -523,17 +563,15 @@ def test_drive_cm_a_distance_menu() -> None:
         "distance",
         "test_drive_cm",
         test_drive_cm_b_speed_menu,
-        select_low_level_function_test,
-    )
+        select_low_level_function_test)
     menu.print_info()
     menu.start_event_listeners()
-
 
 def test_drive_cm_b_speed_menu() -> None:
     """Get the speed for test_drive_cm"""
     # Start menu
     menu = SelectionHandler(
-        -100, 100, 5, 25, "speed", "test_drive_cm", None, test_drive_cm_a_distance_menu
+        -100, 100, 5, 25, "speed", "test_drive_cm", test_drive_cm, test_drive_cm_a_distance_menu
     )
     menu.print_info()
     menu.start_event_listeners()
@@ -549,7 +587,7 @@ def test_drive_cm() -> None:
     # Print info
     controller.screen.clear_screen()
     controller.screen.set_cursor(1, 1)
-    controller.screen.print(distance + ", " + speed)
+    controller.screen.print(str(distance) + ", " + str(speed))
 
     # Create state variable
     button_a_previously_pressed = True
