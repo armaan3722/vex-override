@@ -174,6 +174,13 @@ def drive_cm(distance: float, speed: float) -> None:
         )
         right_rear_drive_motor.spin_for(REVERSE, rotations, TURNS, speed, PERCENT, True)
 
+def close_claw() -> None:
+    """Close the claw and hold it closed."""
+    claw_motor.spin(REVERSE, 100, PERCENT)
+
+def open_claw() -> None:
+    """Open the claw fully."""
+    claw_motor.spin(FORWARD, 100, PERCENT)
 
 ##############################
 ### USER CONTROL FUNCTIONS ###
@@ -206,6 +213,7 @@ def control_drive() -> None:
 
 def control_arm() -> None:
     """Handle user control the arm and claw connected to the arm."""
+    # Arm movement
     if controller.buttonUp.pressing() and not controller.buttonDown.pressing():
         claw_arm_motor.spin(FORWARD, 25, PERCENT)
     elif controller.buttonDown.pressing() and not controller.buttonUp.pressing():
@@ -213,12 +221,17 @@ def control_arm() -> None:
     else:
         claw_arm_motor.stop()
 
-    if controller.buttonRight.pressing() and not controller.buttonLeft.pressing():
+    # Claw movement
+    if controller.buttonL1.pressing() and not controller.buttonR1.pressing():
+        close_claw()
+    elif controller.buttonR1.pressing() and not controller.buttonR2.pressing():
+        open_claw()
+    elif controller.buttonRight.pressing() and not controller.buttonLeft.pressing():
         claw_motor.spin(FORWARD, 25, PERCENT)
     elif controller.buttonLeft.pressing() and not controller.buttonRight.pressing():
         claw_motor.spin(REVERSE, 25, PERCENT)
-    else:
-        claw_motor.stop()
+    # else:
+        # claw_motor.stop(HOLD)
 
 
 def user_control() -> None:
@@ -492,8 +505,7 @@ def select_low_level_function_test() -> None:
     defined in the initial list of functions.
     """
     # Set list of functions
-    # Switch this to test_drive_cm_deprecated if not working
-    low_level_functions = [("Drive CM", test_drive_cm_a_distance_menu)]
+    low_level_functions = [("Drive CM", test_drive_cm_a_distance_menu), ("Close claw", close_claw), ("Open claw", open_claw)]
 
     # Define state variables
     button_a_previously_pressed = True
