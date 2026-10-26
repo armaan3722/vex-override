@@ -4,15 +4,19 @@ from vex import *
 
 DRIVE_WHEELS_DIAMETER: float = 10.16
 """Diameter in CM."""
+ROBOT_WIDTH: float = 40
+"""Width of robot in CM"""
+
 
 def do_nothing_callback() -> None:
     """A callback that does nothing."""
+
 
 on_button_presses = {
     "button_a": do_nothing_callback,
     "button_b": do_nothing_callback,
     "button_up": do_nothing_callback,
-    "button_down": do_nothing_callback
+    "button_down": do_nothing_callback,
 }
 """What function should be run on button presses."""
 
@@ -127,6 +131,37 @@ def get_rotations_from_distance(distance: float, wheel_diameter: float) -> float
     return round(rotations, 3)
 
 
+def get_rotations_from_turn(
+    diameter: float, width: float, angle_to_rotate: float
+) -> float:
+    """Get the number of rotations for the wheel to turn to rotate the robot be
+    a certain amount of degrees.
+
+    Args:
+        diameter: The diameter of the wheels.
+        width: The distance between the left and right wheels.
+        angle_to_rotate: The angle to rotate, in degrees clockwise.
+
+    Returns:
+        The amount of rotations that should be applied to the left wheel (and
+            the amount of rotations to apply in reverse to the right wheel) as a float rounded to 3 digits.
+
+    Raises:
+        ValueError: If diameter or width are below 0.
+    """
+    # Raise value errors
+    check_in_range(diameter, 0, None, True, True)
+    check_in_range(width, 0, None, True, True)
+
+    # Compute value
+    wheel_circumference = diameter * math.pi
+    angle_in_turns = angle_to_rotate / 360
+    turning_circumference = width * math.pi
+    arc_length = turning_circumference * angle_in_turns
+    wheel_turns = arc_length / wheel_circumference
+    return round(wheel_turns, 3)
+
+
 ############################
 ### AUTONOMOUS FUNCTIONS ###
 ############################
@@ -173,6 +208,43 @@ def drive_cm(distance: float, speed: float) -> None:
             REVERSE, rotations, TURNS, speed, PERCENT, False
         )
         right_rear_drive_motor.spin_for(REVERSE, rotations, TURNS, speed, PERCENT, True)
+
+
+def turn_angle(angle: float, speed: float) -> None:
+    """Turn the robot to a specified angle.
+
+    Args:
+        angle: The angle to rotate in degrees clockwise.
+        speed: The speed to rotate at.
+
+    Raises:
+        ValueError: If speed is not between -100 and 100 inclusively.
+    """
+    # Raise value errors
+    check_in_range(speed, -100, 100, True, True)
+
+    # Get rotations
+    rotations = get_rotations_from_turn(DRIVE_WHEELS_DIAMETER, ROBOT_WIDTH, angle)
+
+    # Turn motors
+    if speed > 0:
+        left_front_drive_motor.spin_for(
+            FORWARD, rotations, TURNS, speed, PERCENT, False
+        )
+        left_rear_drive_motor.spin_for(FORWARD, rotations, TURNS, speed, PERCENT, False)
+        right_front_drive_motor.spin_for(
+            REVERSE, rotations, TURNS, speed, PERCENT, False
+        )
+        right_rear_drive_motor.spin_for(REVERSE, rotations, TURNS, speed, PERCENT, True)
+    else:
+        left_front_drive_motor.spin_for(
+            REVERSE, rotations, TURNS, speed, PERCENT, False
+        )
+        left_rear_drive_motor.spin_for(REVERSE, rotations, TURNS, speed, PERCENT, False)
+        right_front_drive_motor.spin_for(
+            FORWARD, rotations, TURNS, speed, PERCENT, False
+        )
+        right_rear_drive_motor.spin_for(FORWARD, rotations, TURNS, speed, PERCENT, True)
 
 
 ##############################
@@ -248,6 +320,7 @@ def user_control() -> None:
 ### TESTING MODE ###
 ####################
 
+
 def run_button_functions(button_pressed: str) -> None:
     """Runs the correct functions based on on_button_presses dictionary.
 
@@ -274,6 +347,7 @@ def run_button_functions(button_pressed: str) -> None:
     else:
         raise ValueError("Invalid button pressed.")
 
+
 def create_event_listeners() -> None:
     """Creates event listeners for buttons.
 
@@ -285,6 +359,7 @@ def create_event_listeners() -> None:
     controller.buttonUp.pressed(run_button_functions, ("up",))
     controller.buttonDown.pressed(run_button_functions, ("down",))
 
+
 def disable_event_listeners() -> None:
     """Disables button event listeners.
 
@@ -294,6 +369,7 @@ def disable_event_listeners() -> None:
     on_button_presses["button_b"] = do_nothing_callback
     on_button_presses["button_up"] = do_nothing_callback
     on_button_presses["button_down"] = do_nothing_callback
+
 
 class SelectionHandler:
     """Handles creating a numerical selection menu."""
@@ -552,6 +628,7 @@ def select_low_level_function_test() -> None:
         # Go back if B pressed
         select_auto_test_mode()
 
+
 def test_drive_cm_a_distance_menu() -> None:
     """Get the distance for test_drive_cm"""
     # Start menu
@@ -563,15 +640,24 @@ def test_drive_cm_a_distance_menu() -> None:
         "distance",
         "test_drive_cm",
         test_drive_cm_b_speed_menu,
-        select_low_level_function_test)
+        select_low_level_function_test,
+    )
     menu.print_info()
     menu.start_event_listeners()
+
 
 def test_drive_cm_b_speed_menu() -> None:
     """Get the speed for test_drive_cm"""
     # Start menu
     menu = SelectionHandler(
-        -100, 100, 5, 25, "speed", "test_drive_cm", test_drive_cm, test_drive_cm_a_distance_menu
+        -100,
+        100,
+        5,
+        25,
+        "speed",
+        "test_drive_cm",
+        test_drive_cm,
+        test_drive_cm_a_distance_menu,
     )
     menu.print_info()
     menu.start_event_listeners()
