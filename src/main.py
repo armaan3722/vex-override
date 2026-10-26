@@ -569,7 +569,7 @@ def select_low_level_function_test() -> None:
     """
     # Set list of functions
     # Switch this to test_drive_cm_deprecated if not working
-    low_level_functions = [("Drive CM", test_drive_cm_a_distance_menu)]
+    low_level_functions = [("Drive CM", test_drive_cm_a_distance_menu), ("Turn angle", test_turn_angle_a_angle)]
 
     # Define state variables
     button_a_previously_pressed = True
@@ -685,6 +685,7 @@ def test_drive_cm() -> None:
             drive_cm(distance, speed)
         elif controller.buttonB.pressing() and not button_b_previously_pressed:
             test_drive_cm_b_speed_menu()
+            return
 
         # Update states
         button_a_previously_pressed = controller.buttonA.pressing()
@@ -693,6 +694,47 @@ def test_drive_cm() -> None:
         # Set to 50hz loop
         wait(20)
 
+def test_turn_angle_a_angle() -> None:
+    """Get the angle for test_turn_angle."""
+    # Start menu
+    menu = SelectionHandler(-360, 360, 15, 90, "angle", "test_turn_angle", test_turn_angle_b_speed, select_low_level_function_test)
+    menu.print_info()
+    menu.start_event_listeners()
+
+def test_turn_angle_b_speed() -> None:
+    """Get the speed for test_turn_angle."""
+    # Start menu
+    menu = SelectionHandler(-100, 100, 5, 25, "speed", "test_turn_angle", None, test_turn_angle_a_angle)
+
+def test_turn_angle() -> None:
+    """Run turn_angle with the selected values."""
+    # Get values
+    angle = SelectionHandler.test_menu_data["test_turn_angle_angle"]
+    speed = SelectionHandler.test_menu_data["test_turn_angle_speed"]
+    
+    # Print info
+    controller.screen.clear_screen()
+    controller.screen.set_cursor(1, 1)
+    controller.screen.print(str(angle) + ", " + str(speed))
+    
+    # Create state variables
+    button_a_previously_pressed = True
+    button_b_previously_pressed = True
+
+    # Create input loop
+    while True:
+        if controller.buttonA.pressing() and not button_a_previously_pressed:
+            turn_angle(angle, speed)
+        elif controller.buttonB.pressing() and not button_b_previously_pressed:
+            test_turn_angle_b_speed()
+            return
+
+        # Update states
+        button_a_previously_pressed = controller.buttonA.pressing()
+        button_b_previously_pressed = controller.buttonB.pressing()
+
+        # Set to 50hz loop
+        wait(20)
 
 def test_drive_cm_deprecated() -> None:
     """**Deprecated**
