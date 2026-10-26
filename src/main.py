@@ -2,11 +2,15 @@ import math
 
 from vex import *
 
+# Property constants
 DRIVE_WHEELS_DIAMETER: float = 10.16
 """Diameter in CM."""
 ROBOT_WIDTH: float = 40
 """Width of robot in CM"""
 
+# Turning constants
+TURNING_MULTIPLIER: float = 3/4
+"""The number to mulitply by the theoretical rotations to get actual rotations"""
 
 def do_nothing_callback() -> None:
     """A callback that does nothing."""
@@ -227,6 +231,7 @@ def turn_angle(angle: float, speed: float) -> None:
     rotations = round(
         get_rotations_from_angle(DRIVE_WHEELS_DIAMETER, ROBOT_WIDTH, angle), 3
     )
+    rotations *= TURNING_MULTIPLIER
 
     # Turn motors
     if speed > 0:
@@ -721,7 +726,7 @@ def test_turn_angle_b_speed() -> None:
     """Get the speed for test_turn_angle."""
     # Start menu
     menu = SelectionHandler(
-        -100, 100, 5, 25, "speed", "test_turn_angle", None, test_turn_angle_a_angle
+        -100, 100, 5, 25, "speed", "test_turn_angle", test_turn_angle, test_turn_angle_a_angle
     )
     menu.print_info()
     menu.start_event_listeners()
