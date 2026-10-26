@@ -131,7 +131,7 @@ def get_rotations_from_distance(distance: float, wheel_diameter: float) -> float
     return round(rotations, 3)
 
 
-def get_rotations_from_turn(
+def get_rotations_from_angle(
     diameter: float, width: float, angle_to_rotate: float
 ) -> float:
     """Get the number of rotations for the wheel to turn to rotate the robot be
@@ -144,14 +144,14 @@ def get_rotations_from_turn(
 
     Returns:
         The amount of rotations that should be applied to the left wheel (and
-            the amount of rotations to apply in reverse to the right wheel) as a float rounded to 3 digits.
+            the amount of rotations to apply in reverse to the right wheel) as a float.
 
     Raises:
-        ValueError: If diameter or width are below 0.
+        ValueError: If diameter or width are 0 or below.
     """
     # Raise value errors
-    check_in_range(diameter, 0, None, True, True)
-    check_in_range(width, 0, None, True, True)
+    check_in_range(diameter, 0, None, False, True)
+    check_in_range(width, 0, None, False, True)
 
     # Compute value
     wheel_circumference = diameter * math.pi
@@ -159,7 +159,7 @@ def get_rotations_from_turn(
     turning_circumference = width * math.pi
     arc_length = turning_circumference * angle_in_turns
     wheel_turns = arc_length / wheel_circumference
-    return round(wheel_turns, 3)
+    return wheel_turns
 
 
 ############################
@@ -224,7 +224,7 @@ def turn_angle(angle: float, speed: float) -> None:
     check_in_range(speed, -100, 100, True, True)
 
     # Get rotations
-    rotations = get_rotations_from_turn(DRIVE_WHEELS_DIAMETER, ROBOT_WIDTH, angle)
+    rotations = round(get_rotations_from_angle(DRIVE_WHEELS_DIAMETER, ROBOT_WIDTH, angle), 3)
 
     # Turn motors
     if speed > 0:
