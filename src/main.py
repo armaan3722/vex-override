@@ -45,6 +45,10 @@ ROTATION_SENSOR_OFFSET: float = -60
 misalignment between rotation sensor range and expected range."""
 ARM_PIVOT_HEIGHT: float = in_to_cm(15)
 """The height of the pivot point for the arm in CM."""
+SLOW_SPEED: float = 20
+"""The speed to move the arm when close to the desired height, as a percent."""
+SLOW_SPEED_TOLERANCE: float = 5
+"""The distance from the target to start moving at the slow speed, in CM."""
 
 #########################
 ### UTILITY FUNCTIONS ###
@@ -89,6 +93,7 @@ def check_in_range(
         if max_value is not None and input_value >= max_value:
             raise ValueError()
 
+
 def degrees_to_radians(angle: float) -> float:
     """Convert degrees to radians.
 
@@ -99,6 +104,7 @@ def degrees_to_radians(angle: float) -> float:
         The result in radians.
     """
     return angle * (math.pi / 180)
+
 
 ######################
 ### MATH FUNCTIONS ###
@@ -197,7 +203,10 @@ def get_rotations_from_angle(
     wheel_turns = arc_length / wheel_circumference
     return wheel_turns
 
-def get_height_from_angle(angle: float, arm_length: float, pivot_height: float, angle_offset: float) -> float:
+
+def get_height_from_angle(
+    angle: float, arm_length: float, pivot_height: float
+) -> float:
     """Get the height of the end of a rotating arm from its angle.
 
     Args:
@@ -219,9 +228,6 @@ def get_height_from_angle(angle: float, arm_length: float, pivot_height: float, 
         ValueError: If angle is not within the range of 0 to 180 inclusively,
             or it arm_length or pivot_height are not positive.
     """
-    # Use angle offset
-    angle += angle_offset
-
     # Check for values in range
     check_in_range(angle, 0, 180, True, True)
 
@@ -331,6 +337,38 @@ def turn_angle(angle: float, speed: float) -> None:
             FORWARD, rotations, TURNS, speed, PERCENT, False
         )
         right_rear_drive_motor.spin_for(FORWARD, rotations, TURNS, speed, PERCENT, True)
+
+
+def set_arm_height(height: float, speed: float) -> None:
+    # Raise value errors
+    check_in_range(height, 0, None, True, True)
+    check_in_range(speed, -100, 100, True, True)
+
+    # Start feedback loop
+    while True:
+        # Get height
+        angle = arm_rotation.angle(DEGREES) + ROTATION_SENSOR_OFFSET
+        current_height = get_height_from_angle(
+            angle, ROTATING_ARM_LENGTH, ARM_PIVOT_HEIGHT
+        )
+
+        # Get speed
+        if abs(current_height - height) <= SLOW_SPEED_TOLERANCE:
+            current_speed = SLOW_SPEED
+        else:
+            current_speed = speed
+
+        # Spin motor
+        if current_height > height and abs(current_height - height) > 2:
+            claw_arm_motor.spin(REVERSE, current_speed, PERCENT)
+        elif current_height < height and abs(current_height - height) > 2:
+            claw_arm_motor.spin(FORWARD, current_speed, PERCENT)
+        elif abs(current_height - height) <= 2:
+            claw_arm_motor.stop()
+            break
+
+        # Limit to 100hz
+        wait(10, MSEC)
 
 
 ##############################
@@ -988,6 +1026,7 @@ if __name__ == "__main__":
     claw_arm_motor: Motor = Motor(Ports.PORT8, GearSetting.RATIO_18_1, True)
     """The motor that changes the height of the arm that the claw is on, forward
     will lift the arm up."""
+    arm_rotation = Rotation(Ports.PORT7)
 
     # Check mode
     wait(500)

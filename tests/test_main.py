@@ -194,30 +194,31 @@ def test_get_rotations_from_angle_value_error(diameter, width, angle):
     with pytest.raises(ValueError):
         get_rotations_from_angle(diameter, width, angle)
 
+
 #############################
 ### GET HEIGHT FROM ANGLE ###
 #############################
 
-@pytest.mark.parametrize(
-    "angle, arm_length, pivot_height, angle_offset, expected",
-    [
-        (0, 12, 15, 0, 27),
-        (90, 12, 15, 90, 3),
-        (27, 17.5, 14, 18, 26.375)
-    ]
-)
-def test_get_height_from_angle_valid(angle, arm_length, pivot_height, angle_offset, expected):
-    assert get_height_from_angle(angle, arm_length, pivot_height, angle_offset) == pytest.approx(expected, abs=0.001, rel=0)
 
 @pytest.mark.parametrize(
-    "angle, arm_length, pivot_height, angle_offset",
-    [
-        (372.56, 0, 12, 54.63),
-        (-372.56, -1, 253, 6545.34),
-        (123.456789, 152, 0, 52432),
-        (61254.43, 65, -1, 43),
-    ]
+    "angle, arm_length, pivot_height, expected",
+    [(0, 12, 15, 27), (180, 12, 15, 3), (45, 17.5, 14, 26.375)],
 )
-def test_get_height_from_angle_value_error(angle, arm_length, pivot_height, angle_offset):
+def test_get_height_from_angle_valid(angle, arm_length, pivot_height, expected):
+    assert get_height_from_angle(angle, arm_length, pivot_height) == pytest.approx(
+        expected, abs=0.001, rel=0
+    )
+
+
+@pytest.mark.parametrize(
+    "angle, arm_length, pivot_height",
+    [
+        (372.56, 0, 12),
+        (-372.56, -1, 253),
+        (123.456789, 152, 0),
+        (61254.43, 65, -1),
+    ],
+)
+def test_get_height_from_angle_value_error(angle, arm_length, pivot_height):
     with pytest.raises(ValueError):
-        get_height_from_angle(angle, arm_length, pivot_height, angle_offset)
+        get_height_from_angle(angle, arm_length, pivot_height)
