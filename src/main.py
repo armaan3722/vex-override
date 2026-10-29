@@ -2,18 +2,21 @@ import math
 
 from vex import *
 
-# Property constants
-DRIVE_WHEELS_DIAMETER: float = 10.16
-"""Diameter in CM."""
-ROBOT_WIDTH: float = 40
-"""Width of robot in CM"""
-
-# Turning constants
-TURNING_MULTIPLIER: float = 3/4
-"""The number to mulitply by the theoretical rotations to get actual rotations"""
 
 def do_nothing_callback() -> None:
     """A callback that does nothing."""
+
+
+def in_to_cm(inches: float) -> float:
+    """Converts a value in inches to centimeters.
+
+    Args:
+        inches: The value in inches to convert to centimeters.
+
+    Returns:
+        The converted value in centimeters.
+    """
+    return inches * 2.54
 
 
 on_button_presses = {
@@ -23,6 +26,16 @@ on_button_presses = {
     "button_down": do_nothing_callback,
 }
 """What function should be run on button presses."""
+
+# Property constants
+DRIVE_WHEELS_DIAMETER: float = in_to_cm(4)
+"""Diameter in CM."""
+ROBOT_WIDTH: float = 40
+"""Width of robot in CM"""
+
+# Turning constants
+TURNING_MULTIPLIER: float = 3 / 4
+"""The number to multiply by the theoretical rotations to get actual rotations"""
 
 #########################
 ### UTILITY FUNCTIONS ###
@@ -213,13 +226,16 @@ def drive_cm(distance: float, speed: float) -> None:
         )
         right_rear_drive_motor.spin_for(REVERSE, rotations, TURNS, speed, PERCENT, True)
 
+
 def close_claw() -> None:
     """Close the claw and hold it closed."""
     claw_motor.spin(REVERSE, 100, PERCENT)
 
+
 def open_claw() -> None:
     """Open the claw fully."""
     claw_motor.spin(FORWARD, 100, PERCENT)
+
 
 def turn_angle(angle: float, speed: float) -> None:
     """Turn the robot to a specified angle.
@@ -310,7 +326,7 @@ def control_arm() -> None:
     elif controller.buttonLeft.pressing() and not controller.buttonRight.pressing():
         claw_motor.spin(REVERSE, 25, PERCENT)
     # else:
-        # claw_motor.stop(HOLD)
+    # claw_motor.stop(HOLD)
 
 
 def user_control() -> None:
@@ -593,7 +609,7 @@ def select_low_level_function_test() -> None:
         ("Drive CM", test_drive_cm_a_distance_menu),
         ("Turn angle", test_turn_angle_a_angle),
         ("Close claw", close_claw),
-        ("Open claw", open_claw)
+        ("Open claw", open_claw),
     ]
 
     # Define state variables
@@ -741,7 +757,14 @@ def test_turn_angle_b_speed() -> None:
     """Get the speed for test_turn_angle."""
     # Start menu
     menu = SelectionHandler(
-        -100, 100, 5, 25, "speed", "test_turn_angle", test_turn_angle, test_turn_angle_a_angle
+        -100,
+        100,
+        5,
+        25,
+        "speed",
+        "test_turn_angle",
+        test_turn_angle,
+        test_turn_angle_a_angle,
     )
     menu.print_info()
     menu.start_event_listeners()
