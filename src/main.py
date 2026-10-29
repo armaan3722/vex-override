@@ -27,7 +27,7 @@ on_button_presses = {
 }
 """What function should be run on button presses."""
 
-# Property constants
+# Robot property constants
 DRIVE_WHEELS_DIAMETER: float = in_to_cm(4)
 """Diameter in CM."""
 ROBOT_WIDTH: float = 40
@@ -36,6 +36,15 @@ ROBOT_WIDTH: float = 40
 # Turning constants
 TURNING_MULTIPLIER: float = 3 / 4
 """The number to multiply by the theoretical rotations to get actual rotations"""
+
+# Rotation arm constants
+ROTATING_ARM_LENGTH: float = in_to_cm(12)
+"""The length of the rotating arm in CM."""
+ROTATION_SENSOR_OFFSET: float = -60
+"""The number to be added to whatever the rotation sensor reads to account for
+misalignment between rotation sensor range and expected range."""
+ARM_PIVOT_HEIGHT: float = in_to_cm(15)
+"""The height of the pivot point for the arm in CM."""
 
 #########################
 ### UTILITY FUNCTIONS ###
@@ -80,6 +89,16 @@ def check_in_range(
         if max_value is not None and input_value >= max_value:
             raise ValueError()
 
+def degrees_to_radians(angle: float) -> float:
+    """Convert degrees to radians.
+
+    Args:
+        angle: The angle in degrees.
+
+    Returns:
+        The result in radians.
+    """
+    return angle * (math.pi / 180)
 
 ######################
 ### MATH FUNCTIONS ###
@@ -177,6 +196,43 @@ def get_rotations_from_angle(
     arc_length = turning_circumference * angle_in_turns
     wheel_turns = arc_length / wheel_circumference
     return wheel_turns
+
+def get_height_from_angle(angle: float, arm_length: float, pivot_height: float, angle_offset: float) -> float:
+    """Get the height of the end of a rotating arm from its angle.
+
+    Args:
+        angle: The angle that the rotating arm is at, in degrees, between 0 and
+            180, where 0 represents directly vertical up and 180 represents
+            vertical down.
+        arm_length: The length of the rotating arm, from the pivot to the end
+            where height is being measured from.
+        pivot_height: The height from the ground that the pivot point is.
+        angle_offset: The amount to be added to the angle given to account for
+            differences between the rotation sensor range and the expected
+            range.
+
+    Returns:
+        The height of the end of the rotating arm, in the same units as what
+            was used for arm_length and pivot_height.
+
+    Raises:
+        ValueError: If angle is not within the range of 0 to 180 inclusively,
+            or it arm_length or pivot_height are not positive.
+    """
+    # Use angle offset
+    angle += angle_offset
+
+    # Check for values in range
+    check_in_range(angle, 0, 180, True, True)
+
+    # Get arm distance from pivot
+    angle_in_radians = degrees_to_radians(angle)
+    arm_height_from_pivot = math.cos(angle_in_radians) * arm_length
+
+    # Get actual height
+    height = arm_height_from_pivot + pivot_height
+
+    return height
 
 
 ############################
