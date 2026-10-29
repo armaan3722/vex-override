@@ -1,6 +1,15 @@
 import pytest
 
-from main import check_in_range, get_motors_from_inputs, get_rotations_from_distance
+from main import (
+    check_in_range,
+    get_motors_from_inputs,
+    get_rotations_from_angle,
+    get_rotations_from_distance,
+)
+
+######################
+### CHECK IN RANGE ###
+######################
 
 
 @pytest.mark.parametrize(
@@ -47,6 +56,11 @@ def test_check_in_range(
             )
     else:
         check_in_range(input_value, min_value, max_value, min_inclusive, max_inclusive)
+
+
+##############################
+### GET MOTORS FROM INPUTS ###
+##############################
 
 
 @pytest.mark.parametrize(
@@ -106,6 +120,11 @@ def test_get_motors_from_inputs_value_error(throttle_input, steering_input):
         get_motors_from_inputs(throttle_input, steering_input)
 
 
+###################################
+### GET ROTATIONS FROM DISTANCE ###
+###################################
+
+
 @pytest.mark.parametrize(
     "distance, diameter, expected",
     [
@@ -124,3 +143,52 @@ def test_get_rotations_from_distance(distance, diameter, expected):
 def test_get_rotations_from_distance_value_error(distance, diameter):
     with pytest.raises(ValueError):
         get_rotations_from_distance(distance, diameter)
+
+
+###############################
+### GET ROTATIONS FROM TURN ###
+###############################
+
+
+@pytest.mark.parametrize(
+    "diameter, width, angle, expected",
+    [
+        (3, 12, 45, 0.5),
+        (2, 12, 135, 2.25),
+        (2.5, 7.5, 215, 1.792),
+        (1, 4, 180, 2),
+        (8, 8, -360, -1),
+    ],
+)
+def test_get_rotations_from_angle_valid(diameter, width, angle, expected):
+    assert get_rotations_from_angle(diameter, width, angle) == pytest.approx(
+        expected, abs=0.001, rel=0
+    )
+
+
+@pytest.mark.parametrize(
+    "diameter_one, width_one, angle_one, diameter_two, width_two, angle_two, scale_factor",
+    [
+        (3, 4, 180, 6, 4, 180, 0.5),
+        (5, 2, 273.75, 5, 8, 273.75, 4),
+        (4, 2, 45, 4, 2, 135, 3),
+        (4, 2, 90, 4, 2, -90, -1),
+    ],
+)
+def test_get_rotations_from_angle_scaling(
+    diameter_one, width_one, angle_one, diameter_two, width_two, angle_two, scale_factor
+):
+    assert get_rotations_from_angle(
+        diameter_one, width_one, angle_one
+    ) * scale_factor == pytest.approx(
+        get_rotations_from_angle(diameter_two, width_two, angle_two), abs=0.001, rel=0
+    )
+
+
+@pytest.mark.parametrize(
+    "diameter, width, angle",
+    [(-1, 5, 45), (0, 5, 45), (5, -1, 45), (5, 0, 45), (-1, -2, 45)],
+)
+def test_get_rotations_from_angle_value_error(diameter, width, angle):
+    with pytest.raises(ValueError):
+        get_rotations_from_angle(diameter, width, angle)

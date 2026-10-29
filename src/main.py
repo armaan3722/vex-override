@@ -2,17 +2,25 @@ import math
 
 from vex import *
 
+# Property constants
 DRIVE_WHEELS_DIAMETER: float = 10.16
 """Diameter in CM."""
+ROBOT_WIDTH: float = 40
+"""Width of robot in CM"""
+
+# Turning constants
+TURNING_MULTIPLIER: float = 3/4
+"""The number to mulitply by the theoretical rotations to get actual rotations"""
 
 def do_nothing_callback() -> None:
     """A callback that does nothing."""
+
 
 on_button_presses = {
     "button_a": do_nothing_callback,
     "button_b": do_nothing_callback,
     "button_up": do_nothing_callback,
-    "button_down": do_nothing_callback
+    "button_down": do_nothing_callback,
 }
 """What function should be run on button presses."""
 
@@ -127,6 +135,37 @@ def get_rotations_from_distance(distance: float, wheel_diameter: float) -> float
     return round(rotations, 3)
 
 
+def get_rotations_from_angle(
+    diameter: float, width: float, angle_to_rotate: float
+) -> float:
+    """Get the number of rotations for the wheel to turn to rotate the robot be
+    a certain amount of degrees.
+
+    Args:
+        diameter: The diameter of the wheels.
+        width: The distance between the left and right wheels.
+        angle_to_rotate: The angle to rotate, in degrees clockwise.
+
+    Returns:
+        The amount of rotations that should be applied to the left wheel (and
+            the amount of rotations to apply in reverse to the right wheel) as a float.
+
+    Raises:
+        ValueError: If diameter or width are 0 or below.
+    """
+    # Raise value errors
+    check_in_range(diameter, 0, None, False, True)
+    check_in_range(width, 0, None, False, True)
+
+    # Compute value
+    wheel_circumference = diameter * math.pi
+    angle_in_turns = angle_to_rotate / 360
+    turning_circumference = width * math.pi
+    arc_length = turning_circumference * angle_in_turns
+    wheel_turns = arc_length / wheel_circumference
+    return wheel_turns
+
+
 ############################
 ### AUTONOMOUS FUNCTIONS ###
 ############################
@@ -181,6 +220,46 @@ def close_claw() -> None:
 def open_claw() -> None:
     """Open the claw fully."""
     claw_motor.spin(FORWARD, 100, PERCENT)
+
+def turn_angle(angle: float, speed: float) -> None:
+    """Turn the robot to a specified angle.
+
+    Args:
+        angle: The angle to rotate in degrees clockwise.
+        speed: The speed to rotate at.
+
+    Raises:
+        ValueError: If speed is not between -100 and 100 inclusively.
+    """
+    # Raise value errors
+    check_in_range(speed, -100, 100, True, True)
+
+    # Get rotations
+    rotations = round(
+        get_rotations_from_angle(DRIVE_WHEELS_DIAMETER, ROBOT_WIDTH, angle), 3
+    )
+    rotations *= TURNING_MULTIPLIER
+
+    # Turn motors
+    if speed > 0:
+        left_front_drive_motor.spin_for(
+            FORWARD, rotations, TURNS, speed, PERCENT, False
+        )
+        left_rear_drive_motor.spin_for(FORWARD, rotations, TURNS, speed, PERCENT, False)
+        right_front_drive_motor.spin_for(
+            REVERSE, rotations, TURNS, speed, PERCENT, False
+        )
+        right_rear_drive_motor.spin_for(REVERSE, rotations, TURNS, speed, PERCENT, True)
+    else:
+        left_front_drive_motor.spin_for(
+            REVERSE, rotations, TURNS, speed, PERCENT, False
+        )
+        left_rear_drive_motor.spin_for(REVERSE, rotations, TURNS, speed, PERCENT, False)
+        right_front_drive_motor.spin_for(
+            FORWARD, rotations, TURNS, speed, PERCENT, False
+        )
+        right_rear_drive_motor.spin_for(FORWARD, rotations, TURNS, speed, PERCENT, True)
+
 
 ##############################
 ### USER CONTROL FUNCTIONS ###
@@ -261,6 +340,7 @@ def user_control() -> None:
 ### TESTING MODE ###
 ####################
 
+
 def run_button_functions(button_pressed: str) -> None:
     """Runs the correct functions based on on_button_presses dictionary.
 
@@ -287,6 +367,7 @@ def run_button_functions(button_pressed: str) -> None:
     else:
         raise ValueError("Invalid button pressed.")
 
+
 def create_event_listeners() -> None:
     """Creates event listeners for buttons.
 
@@ -298,6 +379,7 @@ def create_event_listeners() -> None:
     controller.buttonUp.pressed(run_button_functions, ("up",))
     controller.buttonDown.pressed(run_button_functions, ("down",))
 
+
 def disable_event_listeners() -> None:
     """Disables button event listeners.
 
@@ -307,6 +389,7 @@ def disable_event_listeners() -> None:
     on_button_presses["button_b"] = do_nothing_callback
     on_button_presses["button_up"] = do_nothing_callback
     on_button_presses["button_down"] = do_nothing_callback
+
 
 class SelectionHandler:
     """Handles creating a numerical selection menu."""
@@ -505,7 +588,13 @@ def select_low_level_function_test() -> None:
     defined in the initial list of functions.
     """
     # Set list of functions
-    low_level_functions = [("Drive CM", test_drive_cm_a_distance_menu), ("Close claw", close_claw), ("Open claw", open_claw)]
+    # Switch this to test_drive_cm_deprecated if not working
+    low_level_functions = [
+        ("Drive CM", test_drive_cm_a_distance_menu),
+        ("Turn angle", test_turn_angle_a_angle),
+        ("Close claw", close_claw),
+        ("Open claw", open_claw)
+    ]
 
     # Define state variables
     button_a_previously_pressed = True
@@ -564,6 +653,7 @@ def select_low_level_function_test() -> None:
         # Go back if B pressed
         select_auto_test_mode()
 
+
 def test_drive_cm_a_distance_menu() -> None:
     """Get the distance for test_drive_cm"""
     # Start menu
@@ -575,15 +665,24 @@ def test_drive_cm_a_distance_menu() -> None:
         "distance",
         "test_drive_cm",
         test_drive_cm_b_speed_menu,
-        select_low_level_function_test)
+        select_low_level_function_test,
+    )
     menu.print_info()
     menu.start_event_listeners()
+
 
 def test_drive_cm_b_speed_menu() -> None:
     """Get the speed for test_drive_cm"""
     # Start menu
     menu = SelectionHandler(
-        -100, 100, 5, 25, "speed", "test_drive_cm", test_drive_cm, test_drive_cm_a_distance_menu
+        -100,
+        100,
+        5,
+        25,
+        "speed",
+        "test_drive_cm",
+        test_drive_cm,
+        test_drive_cm_a_distance_menu,
     )
     menu.print_info()
     menu.start_event_listeners()
@@ -611,6 +710,65 @@ def test_drive_cm() -> None:
             drive_cm(distance, speed)
         elif controller.buttonB.pressing() and not button_b_previously_pressed:
             test_drive_cm_b_speed_menu()
+            return
+
+        # Update states
+        button_a_previously_pressed = controller.buttonA.pressing()
+        button_b_previously_pressed = controller.buttonB.pressing()
+
+        # Set to 50hz loop
+        wait(20)
+
+
+def test_turn_angle_a_angle() -> None:
+    """Get the angle for test_turn_angle."""
+    # Start menu
+    menu = SelectionHandler(
+        -360,
+        360,
+        15,
+        90,
+        "angle",
+        "test_turn_angle",
+        test_turn_angle_b_speed,
+        select_low_level_function_test,
+    )
+    menu.print_info()
+    menu.start_event_listeners()
+
+
+def test_turn_angle_b_speed() -> None:
+    """Get the speed for test_turn_angle."""
+    # Start menu
+    menu = SelectionHandler(
+        -100, 100, 5, 25, "speed", "test_turn_angle", test_turn_angle, test_turn_angle_a_angle
+    )
+    menu.print_info()
+    menu.start_event_listeners()
+
+
+def test_turn_angle() -> None:
+    """Run turn_angle with the selected values."""
+    # Get values
+    angle = SelectionHandler.test_menu_data["test_turn_angle_angle"]
+    speed = SelectionHandler.test_menu_data["test_turn_angle_speed"]
+
+    # Print info
+    controller.screen.clear_screen()
+    controller.screen.set_cursor(1, 1)
+    controller.screen.print(str(angle) + ", " + str(speed))
+
+    # Create state variables
+    button_a_previously_pressed = True
+    button_b_previously_pressed = True
+
+    # Create input loop
+    while True:
+        if controller.buttonA.pressing() and not button_a_previously_pressed:
+            turn_angle(angle, speed)
+        elif controller.buttonB.pressing() and not button_b_previously_pressed:
+            test_turn_angle_b_speed()
+            return
 
         # Update states
         button_a_previously_pressed = controller.buttonA.pressing()
