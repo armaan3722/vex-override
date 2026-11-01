@@ -49,6 +49,9 @@ SLOW_SPEED: float = 20
 """The speed to move the arm when close to the desired height, as a percent."""
 SLOW_SPEED_TOLERANCE: float = 5
 """The distance from the target to start moving at the slow speed, in CM."""
+CLOSE_ENOUGH_TOLERANCE: float = 2
+"""The distance where the arm is considered close enough to the target and
+stops moving, in CM"""
 
 #########################
 ### UTILITY FUNCTIONS ###
@@ -340,6 +343,16 @@ def turn_angle(angle: float, speed: float) -> None:
 
 
 def set_arm_height(height: float, speed: float) -> None:
+    """Moves the arm to the specified height.
+
+    Args:
+        height: The height to set the arm to, in CM.
+        speed: The speed to move the arm at.
+
+    Raises:
+        ValueError: If speed is not in within range of -100 to 100, or if
+            height is below 0.
+    """
     # Raise value errors
     check_in_range(height, 0, None, True, True)
     check_in_range(speed, -100, 100, True, True)
@@ -359,11 +372,11 @@ def set_arm_height(height: float, speed: float) -> None:
             current_speed = speed
 
         # Spin motor
-        if current_height > height and abs(current_height - height) > 2:
+        if current_height > height and abs(current_height - height) > CLOSE_ENOUGH_TOLERANCE:
             claw_arm_motor.spin(REVERSE, current_speed, PERCENT)
-        elif current_height < height and abs(current_height - height) > 2:
+        elif current_height < height and abs(current_height - height) > CLOSE_ENOUGH_TOLERANCE:
             claw_arm_motor.spin(FORWARD, current_speed, PERCENT)
-        elif abs(current_height - height) <= 2:
+        elif abs(current_height - height) <= CLOSE_ENOUGH_TOLERANCE:
             claw_arm_motor.stop()
             break
 
