@@ -52,6 +52,10 @@ SLOW_SPEED_TOLERANCE: float = 5
 CLOSE_ENOUGH_TOLERANCE: float = 2
 """The distance where the arm is considered close enough to the target and
 stops moving, in CM"""
+ARM_MIN_HEIGHT: float = 10
+"""The minimum height of the arm, in CM."""
+ARM_MAX_HEIGHT: float = 50
+"""The maximum height of the arm, in CM."""
 
 #########################
 ### UTILITY FUNCTIONS ###
@@ -233,6 +237,7 @@ def get_height_from_angle(
     """
     # Check for values in range
     check_in_range(angle, 0, 180, True, True)
+    check_in_range(pivot_height, 0, None, False, True)
 
     # Get arm distance from pivot
     angle_in_radians = degrees_to_radians(angle)
@@ -351,10 +356,10 @@ def set_arm_height(height: float, speed: float) -> None:
 
     Raises:
         ValueError: If speed is not in within range of -100 to 100, or if
-            height is below 0.
+            height is not within ARM_MIN_HEIGHT and ARM_MAX_HEIGHT inclusively.
     """
     # Raise value errors
-    check_in_range(height, 0, None, True, True)
+    check_in_range(height, ARM_MIN_HEIGHT, ARM_MAX_HEIGHT, True, True)
     check_in_range(speed, -100, 100, True, True)
 
     # Start feedback loop
@@ -372,9 +377,15 @@ def set_arm_height(height: float, speed: float) -> None:
             current_speed = speed
 
         # Spin motor
-        if current_height > height and abs(current_height - height) > CLOSE_ENOUGH_TOLERANCE:
+        if (
+            current_height > height
+            and abs(current_height - height) > CLOSE_ENOUGH_TOLERANCE
+        ):
             claw_arm_motor.spin(REVERSE, current_speed, PERCENT)
-        elif current_height < height and abs(current_height - height) > CLOSE_ENOUGH_TOLERANCE:
+        elif (
+            current_height < height
+            and abs(current_height - height) > CLOSE_ENOUGH_TOLERANCE
+        ):
             claw_arm_motor.spin(FORWARD, current_speed, PERCENT)
         elif abs(current_height - height) <= CLOSE_ENOUGH_TOLERANCE:
             claw_arm_motor.stop()
@@ -898,6 +909,69 @@ def test_turn_angle() -> None:
             turn_angle(angle, speed)
         elif controller.buttonB.pressing() and not button_b_previously_pressed:
             test_turn_angle_b_speed()
+            return
+
+        # Update states
+        button_a_previously_pressed = controller.buttonA.pressing()
+        button_b_previously_pressed = controller.buttonB.pressing()
+
+        # Set to 50hz loop
+        wait(20)
+
+
+def test_set_arm_height_a_height() -> None:
+    """Get the height to move the arm to."""
+    menu = SelectionHandler(
+        ARM_MIN_HEIGHT,
+        ARM_MAX_HEIGHT,
+        5,
+        25,
+        "height",
+        "test_set_arm_height",
+        test_set_arm_height_b_speed,
+        select_low_level_function_test,
+    )
+    menu.print_info()
+    menu.start_event_listeners()
+
+
+def test_set_arm_height_b_speed() -> None:
+    """Get the speed to move the arm at."""
+    menu = SelectionHandler(
+        -100,
+        100,
+        5,
+        25,
+        "speed",
+        "test_set_arm_height",
+        test_set_arm_height,
+        test_set_arm_height_a_height,
+    )
+    menu.print_info()
+    menu.start_event_listeners()
+
+
+def test_set_arm_height() -> None:
+    """Run set_arm_height with the previously selected values."""
+    # Get values
+    height = SelectionHandler.test_menu_data["test_set_arm_height_height"]
+    speed = SelectionHandler.test_menu_data["test_set_arm_height_speed"]
+
+    # Print info
+    controller.screen.clear_screen()
+    controller.screen.set_cursor(1, 1)
+    controller.screen.print(str(height) + ", " + str(speed))
+
+    # Create state variables
+    button_a_previously_pressed = True
+    button_b_previously_pressed = True
+
+    # Create input loop
+    while True:
+        if controller.buttonA.pressing() and not button_a_previously_pressed:
+            set_arm_height(height, speed)
+        elif controller.buttonB.pressing() and not button_b_previously_pressed:
+            test_set_arm_height_b_speed()
             return
 
         # Update states
