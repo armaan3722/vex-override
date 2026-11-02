@@ -1,6 +1,7 @@
 import math
 
-from vex import *
+if __name__ == "__main__":
+    from vex import *  # noqa: I001
 
 # Property constants
 DRIVE_WHEELS_DIAMETER: float = 10.16
@@ -9,8 +10,9 @@ ROBOT_WIDTH: float = 40
 """Width of robot in CM"""
 
 # Turning constants
-TURNING_MULTIPLIER: float = 3/4
+TURNING_MULTIPLIER: float = 3 / 4
 """The number to mulitply by the theoretical rotations to get actual rotations"""
+
 
 def do_nothing_callback() -> None:
     """A callback that does nothing."""
@@ -166,6 +168,60 @@ def get_rotations_from_angle(
     return wheel_turns
 
 
+def get_output_from_input_curve(
+    input_value: float,
+    neutral_deadzone: float,
+    max_deadzone: float,
+    min_deadzone: float,
+    positive_base: float,
+    negative_base: float,
+) -> float:
+    # Check parameter ranges
+    check_in_range(input_value, -100, 100, True, True)
+    check_in_range(neutral_deadzone, 0, 100, True, True)
+    check_in_range(max_deadzone, 0, 100, True, True)
+    check_in_range(min_deadzone, 0, 100, True, True)
+    check_in_range(positive_base, 0, None, False, True)
+    check_in_range(negative_base, 0, None, False, True)
+
+    # Handle deadzones
+    if -neutral_deadzone <= input_value <= neutral_deadzone:
+        return 0
+    elif 100 - max_deadzone <= input_value:
+        return 100
+    elif -100 + min_deadzone >= input_value:
+        return -100
+
+    # Handle input curve for linear functions
+    if input_value > 0 and positive_base == 1 or input_value < 0 and negative_base == 1:
+        return input_value
+
+    # Do exponential functions
+    if input_value > 0:
+        scaled_input_value = (
+            (input_value - neutral_deadzone)
+            * (100)
+            / ((100 - max_deadzone) - neutral_deadzone)
+        )
+        output_value = 100 * (
+            (1 - positive_base ** (scaled_input_value / 100)) / (1 - positive_base)
+        )
+        return output_value
+    elif input_value < 0:
+        scaled_input_value = (
+            (input_value - (-100 + min_deadzone))
+            * (100)
+            / (-neutral_deadzone - (-100 + min_deadzone))
+        ) - 100
+        output_value = -100 + 100 * (
+            (1 - (1 / negative_base) ** ((scaled_input_value + 100) / 100))
+            / (1 - (1 / negative_base))
+        )
+        return output_value
+
+    return input_value
+
+
 ############################
 ### AUTONOMOUS FUNCTIONS ###
 ############################
@@ -213,13 +269,16 @@ def drive_cm(distance: float, speed: float) -> None:
         )
         right_rear_drive_motor.spin_for(REVERSE, rotations, TURNS, speed, PERCENT, True)
 
+
 def close_claw() -> None:
     """Close the claw and hold it closed."""
     claw_motor.spin(REVERSE, 100, PERCENT)
 
+
 def open_claw() -> None:
     """Open the claw fully."""
     claw_motor.spin(FORWARD, 100, PERCENT)
+
 
 def turn_angle(angle: float, speed: float) -> None:
     """Turn the robot to a specified angle.
@@ -310,7 +369,7 @@ def control_arm() -> None:
     elif controller.buttonLeft.pressing() and not controller.buttonRight.pressing():
         claw_motor.spin(REVERSE, 25, PERCENT)
     # else:
-        # claw_motor.stop(HOLD)
+    # claw_motor.stop(HOLD)
 
 
 def user_control() -> None:
@@ -593,7 +652,7 @@ def select_low_level_function_test() -> None:
         ("Drive CM", test_drive_cm_a_distance_menu),
         ("Turn angle", test_turn_angle_a_angle),
         ("Close claw", close_claw),
-        ("Open claw", open_claw)
+        ("Open claw", open_claw),
     ]
 
     # Define state variables
@@ -741,7 +800,14 @@ def test_turn_angle_b_speed() -> None:
     """Get the speed for test_turn_angle."""
     # Start menu
     menu = SelectionHandler(
-        -100, 100, 5, 25, "speed", "test_turn_angle", test_turn_angle, test_turn_angle_a_angle
+        -100,
+        100,
+        5,
+        25,
+        "speed",
+        "test_turn_angle",
+        test_turn_angle,
+        test_turn_angle_a_angle,
     )
     menu.print_info()
     menu.start_event_listeners()
