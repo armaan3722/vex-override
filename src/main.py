@@ -1,7 +1,7 @@
 import math
 
 if __name__ == "__main__":
-    from vex import *  # noqa: I001
+    from vex import *
 
 # Property constants
 DRIVE_WHEELS_DIAMETER: float = 10.16

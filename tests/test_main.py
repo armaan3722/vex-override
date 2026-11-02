@@ -3,6 +3,7 @@ import pytest
 from main import (
     check_in_range,
     get_motors_from_inputs,
+    get_output_from_input_curve,
     get_rotations_from_angle,
     get_rotations_from_distance,
 )
@@ -192,3 +193,69 @@ def test_get_rotations_from_angle_scaling(
 def test_get_rotations_from_angle_value_error(diameter, width, angle):
     with pytest.raises(ValueError):
         get_rotations_from_angle(diameter, width, angle)
+
+
+###################################
+### GET OUTPUT FROM INPUT CURVE ###
+###################################
+
+
+@pytest.mark.parametrize(
+    "input_value, neutral_deadzone, max_deadzone, min_deadzone, positive_base, negative_base, raise_error",
+    [
+        # Input value
+        (-101, 1, 2, 3, 4, 5, True),
+        (-100, 1, 2, 3, 4, 5, False),
+        (0, 1, 2, 3, 4, 5, False),
+        (100, 1, 2, 3, 4, 5, False),
+        (101, 1, 2, 3, 4, 5, True),
+        # Neutral deadzone
+        (1, -1, 2, 3, 4, 5, True),
+        (1, 0, 2, 3, 4, 5, False),
+        (1, 1, 2, 3, 4, 5, False),
+        # Max deadzone
+        (1, 2, -1, 3, 4, 5, True),
+        (1, 2, 0, 3, 4, 5, False),
+        (1, 2, 1, 2, 3, 4, False),
+        # Min deadzone
+        (1, 2, 3, -1, 4, 5, True),
+        (1, 2, 3, 0, 4, 5, False),
+        (1, 2, 3, 1, 4, 5, False),
+        # Positive base
+        (1, 2, 3, 4, -1, 5, True),
+        (1, 2, 3, 4, 0, 5, True),
+        (1, 2, 3, 4, 0.5, 5, False),
+        # Negative base
+        (1, 2, 3, 4, 5, -1, True),
+        (1, 2, 3, 4, 5, 0, True),
+        (1, 2, 3, 4, 5, 0.5, False),
+    ],
+)
+def test_get_output_from_input_curve_value_error(
+    input_value,
+    neutral_deadzone,
+    max_deadzone,
+    min_deadzone,
+    positive_base,
+    negative_base,
+    raise_error,
+):
+    if raise_error:
+        with pytest.raises(ValueError):
+            get_output_from_input_curve(
+                input_value,
+                neutral_deadzone,
+                max_deadzone,
+                min_deadzone,
+                positive_base,
+                negative_base,
+            )
+    else:
+        get_output_from_input_curve(
+            input_value,
+            neutral_deadzone,
+            max_deadzone,
+            min_deadzone,
+            positive_base,
+            negative_base,
+        )
