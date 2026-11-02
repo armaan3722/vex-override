@@ -30,20 +30,20 @@ on_button_presses = {
 # Robot property constants
 DRIVE_WHEELS_DIAMETER: float = in_to_cm(4)
 """Diameter in CM."""
-ROBOT_WIDTH: float = 40
+ROBOT_WIDTH: float = in_to_cm(11.25)
 """Width of robot in CM"""
 
 # Turning constants
-TURNING_MULTIPLIER: float = 3 / 4
+TURNING_MULTIPLIER: float = 1.05
 """The number to multiply by the theoretical rotations to get actual rotations"""
 
 # Rotation arm constants
-ROTATING_ARM_LENGTH: float = in_to_cm(12)
+ROTATING_ARM_LENGTH: float = in_to_cm(11.5)
 """The length of the rotating arm in CM."""
-ROTATION_SENSOR_OFFSET: float = -60
+ROTATION_SENSOR_OFFSET: float = -32
 """The number to be added to whatever the rotation sensor reads to account for
 misalignment between rotation sensor range and expected range."""
-ARM_PIVOT_HEIGHT: float = in_to_cm(15)
+ARM_PIVOT_HEIGHT: float = in_to_cm(13.5)
 """The height of the pivot point for the arm in CM."""
 SLOW_SPEED: float = 20
 """The speed to move the arm when close to the desired height, as a percent."""
@@ -52,9 +52,9 @@ SLOW_SPEED_TOLERANCE: float = 5
 CLOSE_ENOUGH_TOLERANCE: float = 2
 """The distance where the arm is considered close enough to the target and
 stops moving, in CM"""
-ARM_MIN_HEIGHT: float = 10
+ARM_MIN_HEIGHT: float = in_to_cm(6)
 """The minimum height of the arm, in CM."""
-ARM_MAX_HEIGHT: float = 50
+ARM_MAX_HEIGHT: float = in_to_cm(24)
 """The maximum height of the arm, in CM."""
 
 #########################
@@ -726,6 +726,7 @@ def select_low_level_function_test() -> None:
     low_level_functions = [
         ("Drive CM", test_drive_cm_a_distance_menu),
         ("Turn angle", test_turn_angle_a_angle),
+        ("Set arm", test_set_arm_height_a_height),
         ("Close claw", close_claw),
         ("Open claw", open_claw),
     ]
