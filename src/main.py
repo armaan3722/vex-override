@@ -11,7 +11,21 @@ ROBOT_WIDTH: float = 40
 
 # Turning constants
 TURNING_MULTIPLIER: float = 3 / 4
-"""The number to mulitply by the theoretical rotations to get actual rotations"""
+"""The number to multiply by the theoretical rotations to get actual rotations"""
+
+# X input curve constants
+X_MIN_DEADZONE = 0
+X_NEUTRAL_DEADZONE = 0
+X_MAX_DEADZONE = 0
+X_POSITIVE_BASE = 1
+X_NEGATIVE_BASE = 1
+
+# Y input curve constants
+Y_MIN_DEADZONE = 0
+Y_NEUTRAL_DEADZONE = 0
+Y_MAX_DEADZONE = 0
+Y_POSITIVE_BASE = 1
+Y_NEGATIVE_BASE = 1
 
 
 def do_nothing_callback() -> None:
@@ -327,10 +341,26 @@ def turn_angle(angle: float, speed: float) -> None:
 
 def control_drive() -> None:
     """Handle user control for the drivetrain."""
-    # Get amounts to move each motor
-    left_motor_speed, right_motor_speed = get_motors_from_inputs(
-        controller.axis3.position(), controller.axis1.position()
+    # Get actual inputs from input curve map
+    x_input = get_output_from_input_curve(
+        controller.axis3.position(),
+        X_NEUTRAL_DEADZONE,
+        X_MAX_DEADZONE,
+        X_MIN_DEADZONE,
+        X_POSITIVE_BASE,
+        X_NEGATIVE_BASE,
     )
+    y_input = get_output_from_input_curve(
+        controller.axis1.position(),
+        Y_NEUTRAL_DEADZONE,
+        Y_MAX_DEADZONE,
+        Y_MIN_DEADZONE,
+        Y_POSITIVE_BASE,
+        Y_NEGATIVE_BASE,
+    )
+
+    # Get amounts to move each motor
+    left_motor_speed, right_motor_speed = get_motors_from_inputs(x_input, y_input)
 
     # Control left motor
     if left_motor_speed == 0:
