@@ -258,6 +258,36 @@ def autonomous() -> None:
     """Control all functionality required for the autonomous period."""
 
 
+def red_on_right_autonomous() -> None:
+    """Autonomous program for when red goals are on right of robot."""
+    drive_cm(15, 25)
+    turn_angle(180, 25)
+    set_arm_height(in_to_cm(18.5), 25)
+    drive_cm(25, 50)
+    wait(200)
+    drive_cm(15, -40)
+    wait(100)
+    turn_angle(-113, 25)
+    drive_cm(in_to_cm(15.8), 25)
+    wait(100)
+    set_arm_height(26, 25)
+    wait(100)
+    open_claw()
+    wait(100)
+    close_claw()
+    wait(250)
+    open_claw()
+
+def red_on_left_autonomous() -> None:
+    """Autonomous program for when red goals are on right of robot."""
+    drive_cm(10, 25)
+    turn_angle(180, 25)
+    set_arm_height(in_to_cm(18.5), 25)
+    drive_cm(20, 50)
+    wait(200)
+    drive_cm(15, -50)
+
+
 def drive_cm(distance: float, speed: float) -> None:
     """Drive a distance at a set speed.
 
@@ -687,20 +717,23 @@ def select_auto_test_mode() -> None:
     controller.screen.clear_screen()
     controller.screen.set_cursor(1, 1)
     controller.screen.print("A for low level")
+    controller.screen.set_cursor(2, 1)
+    controller.screen.print("X for routines")
 
     # Create state tracking variables
     button_a_previously_pressed = True
+    button_x_previously_pressed = True
     button_b_previously_pressed = True
 
     # Wait for button press
     while True:
-        if (controller.buttonA.pressing() and not button_a_previously_pressed) or (
-            controller.buttonB.pressing() and not button_b_previously_pressed
-        ):
+        if (controller.buttonA.pressing() and not button_a_previously_pressed) or (controller.buttonB.pressing() and not button_b_previously_pressed) or (controller.buttonX.pressing() and not button_x_previously_pressed):
             break
 
         # Update state
         button_a_previously_pressed = controller.buttonA.pressing()
+        button_b_previously_pressed = controller.buttonB.pressing()
+        button_x_previously_pressed = controller.buttonX.pressing()
 
         # Limit to 50hz
         wait(20)
@@ -708,6 +741,8 @@ def select_auto_test_mode() -> None:
     # Run correct functions
     if controller.buttonA.pressing() and not button_a_previously_pressed:
         select_low_level_function_test()
+    elif controller.buttonX.pressing() and not button_x_previously_pressed:
+        red_on_right_autonomous()
     else:
         # Runs if B pressed, goes back
         start_testing_mode()
