@@ -199,6 +199,29 @@ def test_get_rotations_from_angle_value_error(diameter, width, angle):
 ### GET OUTPUT FROM INPUT CURVE ###
 ###################################
 
+@pytest.mark.parametrize(
+    "input_value, neutral_deadzone, max_deadzone, min_deadzone, positive_base, negative_base, expected",
+    [
+        # Neutral deadzone
+        (0, 5, 5, 5, 10, 10, 0),
+        (5, 5, 5, 5, 10, 10, 0),
+        (-5, 5, 5, 5, 10, 10, 0),
+        (-12, 12, 5, 5, 10, 10, 0),
+        (0, 0, 5, 5, 10, 10, 0),
+        # Max deadzone
+        (100, 5, 5, 5, 10, 10, 100),
+        (95, 5, 5, 5, 10, 10, 100),
+        (88, 5, 12, 5, 10, 10, 100),
+        (100, 5, 0, 5, 10, 10, 100),
+        # Min deadzone
+        (-100, 5, 5, 5, 10, 10, -100),
+        (-95, 5, 5, 5, 10, 10, -100),
+        (-88, 5, 5, 12, 10, 10, -100),
+        (-100, 5, 5, 0, 10, 10, -100)
+    ],
+)
+def test_get_output_from_input_curve_valid(input_value, neutral_deadzone, max_deadzone, min_deadzone, positive_base, negative_base, expected):
+    assert get_output_from_input_curve(input_value, neutral_deadzone, max_deadzone, min_deadzone, positive_base, negative_base) == pytest.approx(expected, abs=0.001, rel=0)
 
 @pytest.mark.parametrize(
     "input_value, neutral_deadzone, max_deadzone, min_deadzone, positive_base, negative_base, raise_error",
