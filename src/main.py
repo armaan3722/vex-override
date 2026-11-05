@@ -1,4 +1,3 @@
-from operator import pos
 import math
 
 if __name__ == "__main__":
@@ -209,9 +208,13 @@ def get_output_from_input_curve(
 
     # Get normalized value
     if input_value > 0:
-        normalized_input_value = (input_value - neutral_deadzone) / ((100 - max_deadzone) - neutral_deadzone)
+        normalized_input_value = (input_value - neutral_deadzone) / (
+            (100 - max_deadzone) - neutral_deadzone
+        )
     elif input_value < 0:
-        normalized_input_value = (input_value - (-100 + min_deadzone)) / (-neutral_deadzone - (-100 + min_deadzone))
+        normalized_input_value = (input_value - (-100 + min_deadzone)) / (
+            -neutral_deadzone - (-100 + min_deadzone)
+        )
     else:
         normalized_input_value = 0
 
@@ -223,12 +226,16 @@ def get_output_from_input_curve(
 
     # Handle exponential functions
     if input_value > 0:
-        exponential_value = (1 - positive_base ** normalized_input_value) / (1 - positive_base)
+        exponential_value = (1 - positive_base**normalized_input_value) / (
+            1 - positive_base
+        )
         output_value = exponential_value * 100
         return output_value
     elif input_value < 0:
         negative_base = 1 / negative_base
-        exponential_value = (1 - negative_base ** normalized_input_value) / (1 - negative_base)
+        exponential_value = (1 - negative_base**normalized_input_value) / (
+            1 - negative_base
+        )
         output_value = exponential_value * 100 - 100
         return output_value
 

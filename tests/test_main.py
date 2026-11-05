@@ -199,6 +199,7 @@ def test_get_rotations_from_angle_value_error(diameter, width, angle):
 ### GET OUTPUT FROM INPUT CURVE ###
 ###################################
 
+
 @pytest.mark.parametrize(
     "input_value, neutral_deadzone, max_deadzone, min_deadzone, positive_base, negative_base, expected",
     [
@@ -217,11 +218,53 @@ def test_get_rotations_from_angle_value_error(diameter, width, angle):
         (-100, 5, 5, 5, 10, 10, -100),
         (-95, 5, 5, 5, 10, 10, -100),
         (-88, 5, 5, 12, 10, 10, -100),
-        (-100, 5, 5, 0, 10, 10, -100)
+        (-100, 5, 5, 0, 10, 10, -100),
+        # Positive curve
+        (25, 0, 0, 0, 1, 10, 25),
+        (50, 0, 0, 0, 1, 10, 50),
+        (75, 0, 0, 0, 1, 10, 75),
+        (25, 5, 5, 5, 1, 10, 22.222),
+        (50, 5, 5, 5, 1, 10, 50),
+        (75, 5, 5, 5, 1, 10, 77.778),
+        (25, 5, 5, 5, 10, 10, 7.423),
+        (50, 5, 5, 5, 10, 10, 24.025),
+        (75, 5, 5, 5, 10, 10, 55.498),
+        (25, 5, 5, 5, 0.2, 10, 37.586),
+        (50, 5, 5, 5, 0.2, 10, 69.098),
+        (75, 5, 5, 5, 0.2, 10, 89.251),
+        # Negative curve
+        (-25, 0, 0, 0, 10, 1, -25),
+        (-50, 0, 0, 0, 10, 1, -50),
+        (-75, 0, 0, 0, 10, 1, -75),
+        (-25, 5, 5, 5, 10, 1, -22.222),
+        (-50, 5, 5, 5, 10, 1, -50),
+        (-75, 5, 5, 5, 10, 1, -77.778),
+        (-25, 5, 5, 5, 10, 10, -7.423),
+        (-50, 5, 5, 5, 10, 10, -24.025),
+        (-75, 5, 5, 5, 10, 10, -55.498),
+        (-25, 5, 5, 5, 10, 0.2, -37.586),
+        (-50, 5, 5, 5, 10, 0.2, -69.098),
+        (-75, 5, 5, 5, 10, 0.2, -89.251),
     ],
 )
-def test_get_output_from_input_curve_valid(input_value, neutral_deadzone, max_deadzone, min_deadzone, positive_base, negative_base, expected):
-    assert get_output_from_input_curve(input_value, neutral_deadzone, max_deadzone, min_deadzone, positive_base, negative_base) == pytest.approx(expected, abs=0.001, rel=0)
+def test_get_output_from_input_curve_valid(
+    input_value,
+    neutral_deadzone,
+    max_deadzone,
+    min_deadzone,
+    positive_base,
+    negative_base,
+    expected,
+):
+    assert get_output_from_input_curve(
+        input_value,
+        neutral_deadzone,
+        max_deadzone,
+        min_deadzone,
+        positive_base,
+        negative_base,
+    ) == pytest.approx(expected, abs=0.001, rel=0)
+
 
 @pytest.mark.parametrize(
     "input_value, neutral_deadzone, max_deadzone, min_deadzone, positive_base, negative_base, raise_error",
