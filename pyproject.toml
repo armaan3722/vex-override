@@ -1,13 +1,16 @@
 [project]
 name = "vex-override"
-version = "0.4.0.dev3"
+version = "0.4.0"
 description = "Add your description here"
 readme = "README.md"
 authors = [
     { name = "Armaan Sandhu", email = "103614886+armaan3722@users.noreply.github.com" }
 ]
 requires-python = ">=3.14,<3.15"
-dependencies = []
+dependencies = [
+    "matplotlib>=3.11.2",
+    "numpy>=2.5.4",
+]
 
 [dependency-groups]
 dev = [

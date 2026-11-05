@@ -4,6 +4,7 @@ from main import (
     check_in_range,
     get_height_from_angle,
     get_motors_from_inputs,
+    get_output_from_input_curve,
     get_rotations_from_angle,
     get_rotations_from_distance,
 )
@@ -194,7 +195,7 @@ def test_get_rotations_from_angle_value_error(diameter, width, angle):
     with pytest.raises(ValueError):
         get_rotations_from_angle(diameter, width, angle)
 
-
+        
 #############################
 ### GET HEIGHT FROM ANGLE ###
 #############################
@@ -222,3 +223,135 @@ def test_get_height_from_angle_valid(angle, arm_length, pivot_height, expected):
 def test_get_height_from_angle_value_error(angle, arm_length, pivot_height):
     with pytest.raises(ValueError):
         get_height_from_angle(angle, arm_length, pivot_height)
+
+        
+###################################
+### GET OUTPUT FROM INPUT CURVE ###
+###################################
+
+
+@pytest.mark.parametrize(
+    "input_value, neutral_deadzone, max_deadzone, min_deadzone, positive_base, negative_base, expected",
+    [
+        # Neutral deadzone
+        (0, 5, 5, 5, 10, 10, 0),
+        (5, 5, 5, 5, 10, 10, 0),
+        (-5, 5, 5, 5, 10, 10, 0),
+        (-12, 12, 5, 5, 10, 10, 0),
+        (0, 0, 5, 5, 10, 10, 0),
+        # Max deadzone
+        (100, 5, 5, 5, 10, 10, 100),
+        (95, 5, 5, 5, 10, 10, 100),
+        (88, 5, 12, 5, 10, 10, 100),
+        (100, 5, 0, 5, 10, 10, 100),
+        # Min deadzone
+        (-100, 5, 5, 5, 10, 10, -100),
+        (-95, 5, 5, 5, 10, 10, -100),
+        (-88, 5, 5, 12, 10, 10, -100),
+        (-100, 5, 5, 0, 10, 10, -100),
+        # Positive curve
+        (25, 0, 0, 0, 1, 10, 25),
+        (50, 0, 0, 0, 1, 10, 50),
+        (75, 0, 0, 0, 1, 10, 75),
+        (25, 5, 5, 5, 1, 10, 22.222),
+        (50, 5, 5, 5, 1, 10, 50),
+        (75, 5, 5, 5, 1, 10, 77.778),
+        (25, 5, 5, 5, 10, 10, 7.423),
+        (50, 5, 5, 5, 10, 10, 24.025),
+        (75, 5, 5, 5, 10, 10, 55.498),
+        (25, 5, 5, 5, 0.2, 10, 37.586),
+        (50, 5, 5, 5, 0.2, 10, 69.098),
+        (75, 5, 5, 5, 0.2, 10, 89.251),
+        # Negative curve
+        (-25, 0, 0, 0, 10, 1, -25),
+        (-50, 0, 0, 0, 10, 1, -50),
+        (-75, 0, 0, 0, 10, 1, -75),
+        (-25, 5, 5, 5, 10, 1, -22.222),
+        (-50, 5, 5, 5, 10, 1, -50),
+        (-75, 5, 5, 5, 10, 1, -77.778),
+        (-25, 5, 5, 5, 10, 10, -7.423),
+        (-50, 5, 5, 5, 10, 10, -24.025),
+        (-75, 5, 5, 5, 10, 10, -55.498),
+        (-25, 5, 5, 5, 10, 0.2, -37.586),
+        (-50, 5, 5, 5, 10, 0.2, -69.098),
+        (-75, 5, 5, 5, 10, 0.2, -89.251),
+    ],
+)
+def test_get_output_from_input_curve_valid(
+    input_value,
+    neutral_deadzone,
+    max_deadzone,
+    min_deadzone,
+    positive_base,
+    negative_base,
+    expected,
+):
+    assert get_output_from_input_curve(
+        input_value,
+        neutral_deadzone,
+        max_deadzone,
+        min_deadzone,
+        positive_base,
+        negative_base,
+    ) == pytest.approx(expected, abs=0.001, rel=0)
+
+
+@pytest.mark.parametrize(
+    "input_value, neutral_deadzone, max_deadzone, min_deadzone, positive_base, negative_base, raise_error",
+    [
+        # Input value
+        (-101, 1, 2, 3, 4, 5, True),
+        (-100, 1, 2, 3, 4, 5, False),
+        (0, 1, 2, 3, 4, 5, False),
+        (100, 1, 2, 3, 4, 5, False),
+        (101, 1, 2, 3, 4, 5, True),
+        # Neutral deadzone
+        (1, -1, 2, 3, 4, 5, True),
+        (1, 0, 2, 3, 4, 5, False),
+        (1, 1, 2, 3, 4, 5, False),
+        # Max deadzone
+        (1, 2, -1, 3, 4, 5, True),
+        (1, 2, 0, 3, 4, 5, False),
+        (1, 2, 1, 2, 3, 4, False),
+        # Min deadzone
+        (1, 2, 3, -1, 4, 5, True),
+        (1, 2, 3, 0, 4, 5, False),
+        (1, 2, 3, 1, 4, 5, False),
+        # Positive base
+        (1, 2, 3, 4, -1, 5, True),
+        (1, 2, 3, 4, 0, 5, True),
+        (1, 2, 3, 4, 0.5, 5, False),
+        # Negative base
+        (1, 2, 3, 4, 5, -1, True),
+        (1, 2, 3, 4, 5, 0, True),
+        (1, 2, 3, 4, 5, 0.5, False),
+    ],
+)
+def test_get_output_from_input_curve_value_error(
+    input_value,
+    neutral_deadzone,
+    max_deadzone,
+    min_deadzone,
+    positive_base,
+    negative_base,
+    raise_error,
+):
+    if raise_error:
+        with pytest.raises(ValueError):
+            get_output_from_input_curve(
+                input_value,
+                neutral_deadzone,
+                max_deadzone,
+                min_deadzone,
+                positive_base,
+                negative_base,
+            )
+    else:
+        get_output_from_input_curve(
+            input_value,
+            neutral_deadzone,
+            max_deadzone,
+            min_deadzone,
+            positive_base,
+            negative_base,
+        )

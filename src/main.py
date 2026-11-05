@@ -1,6 +1,7 @@
 import math
 
-from vex import *
+if __name__ == "__main__":
+    from vex import *
 
 
 def do_nothing_callback() -> None:
@@ -56,6 +57,20 @@ ARM_MIN_HEIGHT: float = in_to_cm(6)
 """The minimum height of the arm, in CM."""
 ARM_MAX_HEIGHT: float = in_to_cm(24)
 """The maximum height of the arm, in CM."""
+
+# X input curve constants
+X_MIN_DEADZONE = 0
+X_NEUTRAL_DEADZONE = 0
+X_MAX_DEADZONE = 0
+X_POSITIVE_BASE = 1
+X_NEGATIVE_BASE = 1
+
+# Y input curve constants
+Y_MIN_DEADZONE = 0
+Y_NEUTRAL_DEADZONE = 0
+Y_MAX_DEADZONE = 0
+Y_POSITIVE_BASE = 1
+Y_NEGATIVE_BASE = 1
 
 #########################
 ### UTILITY FUNCTIONS ###
@@ -210,6 +225,66 @@ def get_rotations_from_angle(
     wheel_turns = arc_length / wheel_circumference
     return wheel_turns
 
+
+def get_output_from_input_curve(
+    input_value: float,
+    neutral_deadzone: float,
+    max_deadzone: float,
+    min_deadzone: float,
+    positive_base: float,
+    negative_base: float,
+) -> float:
+    # Check parameter ranges
+    check_in_range(input_value, -100, 100, True, True)
+    check_in_range(neutral_deadzone, 0, 100, True, True)
+    check_in_range(max_deadzone, 0, 100, True, True)
+    check_in_range(min_deadzone, 0, 100, True, True)
+    check_in_range(positive_base, 0, None, False, True)
+    check_in_range(negative_base, 0, None, False, True)
+
+    # Handle deadzones
+    if -neutral_deadzone <= input_value <= neutral_deadzone:
+        return 0
+    elif 100 - max_deadzone <= input_value:
+        return 100
+    elif -100 + min_deadzone >= input_value:
+        return -100
+
+    # Get normalized value
+    if input_value > 0:
+        normalized_input_value = (input_value - neutral_deadzone) / (
+            (100 - max_deadzone) - neutral_deadzone
+        )
+    elif input_value < 0:
+        normalized_input_value = (input_value - (-100 + min_deadzone)) / (
+            -neutral_deadzone - (-100 + min_deadzone)
+        )
+    else:
+        normalized_input_value = 0
+
+    # Handle input curve for linear functions
+    if input_value > 0 and positive_base == 1:
+        return normalized_input_value * 100
+    elif input_value < 0 and negative_base == 1:
+        return normalized_input_value * 100 - 100
+
+    # Handle exponential functions
+    if input_value > 0:
+        exponential_value = (1 - positive_base**normalized_input_value) / (
+            1 - positive_base
+        )
+        output_value = exponential_value * 100
+        return output_value
+    elif input_value < 0:
+        negative_base = 1 / negative_base
+        exponential_value = (1 - negative_base**normalized_input_value) / (
+            1 - negative_base
+        )
+        output_value = exponential_value * 100 - 100
+        return output_value
+
+    return input_value
+ 
 
 def get_height_from_angle(
     angle: float, arm_length: float, pivot_height: float
@@ -402,10 +477,26 @@ def set_arm_height(height: float, speed: float) -> None:
 
 def control_drive() -> None:
     """Handle user control for the drivetrain."""
-    # Get amounts to move each motor
-    left_motor_speed, right_motor_speed = get_motors_from_inputs(
-        controller.axis3.position(), controller.axis1.position()
+    # Get actual inputs from input curve map
+    x_input = get_output_from_input_curve(
+        controller.axis3.position(),
+        X_NEUTRAL_DEADZONE,
+        X_MAX_DEADZONE,
+        X_MIN_DEADZONE,
+        X_POSITIVE_BASE,
+        X_NEGATIVE_BASE,
     )
+    y_input = get_output_from_input_curve(
+        controller.axis1.position(),
+        Y_NEUTRAL_DEADZONE,
+        Y_MAX_DEADZONE,
+        Y_MIN_DEADZONE,
+        Y_POSITIVE_BASE,
+        Y_NEGATIVE_BASE,
+    )
+
+    # Get amounts to move each motor
+    left_motor_speed, right_motor_speed = get_motors_from_inputs(x_input, y_input)
 
     # Control left motor
     if left_motor_speed == 0:
