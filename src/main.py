@@ -217,9 +217,9 @@ def get_output_from_input_curve(
 
     # Handle input curve for linear functions
     if input_value > 0 and positive_base == 1:
-        return normalized_input_value * ((100 - max_deadzone) - neutral_deadzone) + neutral_deadzone
+        return normalized_input_value * 100
     elif input_value < 0 and negative_base == 1:
-        return normalized_input_value * (-neutral_deadzone - (-100 + min_deadzone))
+        return normalized_input_value * 100 - 100
 
     # Handle exponential functions
     if input_value > 0:
