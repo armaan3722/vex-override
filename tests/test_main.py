@@ -2,6 +2,7 @@ import pytest
 
 from main import (
     check_in_range,
+    get_height_from_angle,
     get_motors_from_inputs,
     get_output_from_input_curve,
     get_rotations_from_angle,
@@ -194,7 +195,36 @@ def test_get_rotations_from_angle_value_error(diameter, width, angle):
     with pytest.raises(ValueError):
         get_rotations_from_angle(diameter, width, angle)
 
+        
+#############################
+### GET HEIGHT FROM ANGLE ###
+#############################
 
+
+@pytest.mark.parametrize(
+    "angle, arm_length, pivot_height, expected",
+    [(0, 12, 15, 27), (180, 12, 15, 3), (45, 17.5, 14, 26.375)],
+)
+def test_get_height_from_angle_valid(angle, arm_length, pivot_height, expected):
+    assert get_height_from_angle(angle, arm_length, pivot_height) == pytest.approx(
+        expected, abs=0.001, rel=0
+    )
+
+
+@pytest.mark.parametrize(
+    "angle, arm_length, pivot_height",
+    [
+        (372.56, 0, 12),
+        (-372.56, -1, 253),
+        (123.456789, 152, 0),
+        (61254.43, 65, -1),
+    ],
+)
+def test_get_height_from_angle_value_error(angle, arm_length, pivot_height):
+    with pytest.raises(ValueError):
+        get_height_from_angle(angle, arm_length, pivot_height)
+
+        
 ###################################
 ### GET OUTPUT FROM INPUT CURVE ###
 ###################################

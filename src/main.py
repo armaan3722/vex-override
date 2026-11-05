@@ -3,15 +3,60 @@ import math
 if __name__ == "__main__":
     from vex import *
 
-# Property constants
-DRIVE_WHEELS_DIAMETER: float = 10.16
+
+def do_nothing_callback() -> None:
+    """A callback that does nothing."""
+
+
+def in_to_cm(inches: float) -> float:
+    """Converts a value in inches to centimeters.
+
+    Args:
+        inches: The value in inches to convert to centimeters.
+
+    Returns:
+        The converted value in centimeters.
+    """
+    return inches * 2.54
+
+
+on_button_presses = {
+    "button_a": do_nothing_callback,
+    "button_b": do_nothing_callback,
+    "button_up": do_nothing_callback,
+    "button_down": do_nothing_callback,
+}
+"""What function should be run on button presses."""
+
+# Robot property constants
+DRIVE_WHEELS_DIAMETER: float = in_to_cm(4)
 """Diameter in CM."""
-ROBOT_WIDTH: float = 40
+ROBOT_WIDTH: float = in_to_cm(11.25)
 """Width of robot in CM"""
 
 # Turning constants
-TURNING_MULTIPLIER: float = 3 / 4
+TURNING_MULTIPLIER: float = 1.05
 """The number to multiply by the theoretical rotations to get actual rotations"""
+
+# Rotation arm constants
+ROTATING_ARM_LENGTH: float = in_to_cm(11.5)
+"""The length of the rotating arm in CM."""
+ROTATION_SENSOR_OFFSET: float = -32
+"""The number to be added to whatever the rotation sensor reads to account for
+misalignment between rotation sensor range and expected range."""
+ARM_PIVOT_HEIGHT: float = in_to_cm(13.5)
+"""The height of the pivot point for the arm in CM."""
+SLOW_SPEED: float = 20
+"""The speed to move the arm when close to the desired height, as a percent."""
+SLOW_SPEED_TOLERANCE: float = 5
+"""The distance from the target to start moving at the slow speed, in CM."""
+CLOSE_ENOUGH_TOLERANCE: float = 2
+"""The distance where the arm is considered close enough to the target and
+stops moving, in CM"""
+ARM_MIN_HEIGHT: float = in_to_cm(6)
+"""The minimum height of the arm, in CM."""
+ARM_MAX_HEIGHT: float = in_to_cm(24)
+"""The maximum height of the arm, in CM."""
 
 # X input curve constants
 X_MIN_DEADZONE = 0
@@ -26,19 +71,6 @@ Y_NEUTRAL_DEADZONE = 0
 Y_MAX_DEADZONE = 0
 Y_POSITIVE_BASE = 1
 Y_NEGATIVE_BASE = 1
-
-
-def do_nothing_callback() -> None:
-    """A callback that does nothing."""
-
-
-on_button_presses = {
-    "button_a": do_nothing_callback,
-    "button_b": do_nothing_callback,
-    "button_up": do_nothing_callback,
-    "button_down": do_nothing_callback,
-}
-"""What function should be run on button presses."""
 
 #########################
 ### UTILITY FUNCTIONS ###
@@ -82,6 +114,18 @@ def check_in_range(
     else:
         if max_value is not None and input_value >= max_value:
             raise ValueError()
+
+
+def degrees_to_radians(angle: float) -> float:
+    """Convert degrees to radians.
+
+    Args:
+        angle: The angle in degrees.
+
+    Returns:
+        The result in radians.
+    """
+    return angle * (math.pi / 180)
 
 
 ######################
@@ -240,6 +284,44 @@ def get_output_from_input_curve(
         return output_value
 
     return input_value
+ 
+
+def get_height_from_angle(
+    angle: float, arm_length: float, pivot_height: float
+) -> float:
+    """Get the height of the end of a rotating arm from its angle.
+
+    Args:
+        angle: The angle that the rotating arm is at, in degrees, between 0 and
+            180, where 0 represents directly vertical up and 180 represents
+            vertical down.
+        arm_length: The length of the rotating arm, from the pivot to the end
+            where height is being measured from.
+        pivot_height: The height from the ground that the pivot point is.
+        angle_offset: The amount to be added to the angle given to account for
+            differences between the rotation sensor range and the expected
+            range.
+
+    Returns:
+        The height of the end of the rotating arm, in the same units as what
+            was used for arm_length and pivot_height.
+
+    Raises:
+        ValueError: If angle is not within the range of 0 to 180 inclusively,
+            or it arm_length or pivot_height are not positive.
+    """
+    # Check for values in range
+    check_in_range(angle, 0, 180, True, True)
+    check_in_range(pivot_height, 0, None, False, True)
+
+    # Get arm distance from pivot
+    angle_in_radians = degrees_to_radians(angle)
+    arm_height_from_pivot = math.cos(angle_in_radians) * arm_length
+
+    # Get actual height
+    height = arm_height_from_pivot + pivot_height
+
+    return height
 
 
 ############################
@@ -338,6 +420,54 @@ def turn_angle(angle: float, speed: float) -> None:
             FORWARD, rotations, TURNS, speed, PERCENT, False
         )
         right_rear_drive_motor.spin_for(FORWARD, rotations, TURNS, speed, PERCENT, True)
+
+
+def set_arm_height(height: float, speed: float) -> None:
+    """Moves the arm to the specified height.
+
+    Args:
+        height: The height to set the arm to, in CM.
+        speed: The speed to move the arm at.
+
+    Raises:
+        ValueError: If speed is not in within range of -100 to 100, or if
+            height is not within ARM_MIN_HEIGHT and ARM_MAX_HEIGHT inclusively.
+    """
+    # Raise value errors
+    check_in_range(height, ARM_MIN_HEIGHT, ARM_MAX_HEIGHT, True, True)
+    check_in_range(speed, -100, 100, True, True)
+
+    # Start feedback loop
+    while True:
+        # Get height
+        angle = arm_rotation.angle(DEGREES) + ROTATION_SENSOR_OFFSET
+        current_height = get_height_from_angle(
+            angle, ROTATING_ARM_LENGTH, ARM_PIVOT_HEIGHT
+        )
+
+        # Get speed
+        if abs(current_height - height) <= SLOW_SPEED_TOLERANCE:
+            current_speed = SLOW_SPEED
+        else:
+            current_speed = speed
+
+        # Spin motor
+        if (
+            current_height > height
+            and abs(current_height - height) > CLOSE_ENOUGH_TOLERANCE
+        ):
+            claw_arm_motor.spin(REVERSE, current_speed, PERCENT)
+        elif (
+            current_height < height
+            and abs(current_height - height) > CLOSE_ENOUGH_TOLERANCE
+        ):
+            claw_arm_motor.spin(FORWARD, current_speed, PERCENT)
+        elif abs(current_height - height) <= CLOSE_ENOUGH_TOLERANCE:
+            claw_arm_motor.stop()
+            break
+
+        # Limit to 100hz
+        wait(10, MSEC)
 
 
 ##############################
@@ -687,6 +817,7 @@ def select_low_level_function_test() -> None:
     low_level_functions = [
         ("Drive CM", test_drive_cm_a_distance_menu),
         ("Turn angle", test_turn_angle_a_angle),
+        ("Set arm", test_set_arm_height_a_height),
         ("Close claw", close_claw),
         ("Open claw", open_claw),
     ]
@@ -880,6 +1011,69 @@ def test_turn_angle() -> None:
         wait(20)
 
 
+def test_set_arm_height_a_height() -> None:
+    """Get the height to move the arm to."""
+    menu = SelectionHandler(
+        ARM_MIN_HEIGHT,
+        ARM_MAX_HEIGHT,
+        5,
+        25,
+        "height",
+        "test_set_arm_height",
+        test_set_arm_height_b_speed,
+        select_low_level_function_test,
+    )
+    menu.print_info()
+    menu.start_event_listeners()
+
+
+def test_set_arm_height_b_speed() -> None:
+    """Get the speed to move the arm at."""
+    menu = SelectionHandler(
+        -100,
+        100,
+        5,
+        25,
+        "speed",
+        "test_set_arm_height",
+        test_set_arm_height,
+        test_set_arm_height_a_height,
+    )
+    menu.print_info()
+    menu.start_event_listeners()
+
+
+def test_set_arm_height() -> None:
+    """Run set_arm_height with the previously selected values."""
+    # Get values
+    height = SelectionHandler.test_menu_data["test_set_arm_height_height"]
+    speed = SelectionHandler.test_menu_data["test_set_arm_height_speed"]
+
+    # Print info
+    controller.screen.clear_screen()
+    controller.screen.set_cursor(1, 1)
+    controller.screen.print(str(height) + ", " + str(speed))
+
+    # Create state variables
+    button_a_previously_pressed = True
+    button_b_previously_pressed = True
+
+    # Create input loop
+    while True:
+        if controller.buttonA.pressing() and not button_a_previously_pressed:
+            set_arm_height(height, speed)
+        elif controller.buttonB.pressing() and not button_b_previously_pressed:
+            test_set_arm_height_b_speed()
+            return
+
+        # Update states
+        button_a_previously_pressed = controller.buttonA.pressing()
+        button_b_previously_pressed = controller.buttonB.pressing()
+
+        # Set to 50hz loop
+        wait(20)
+
+
 def test_drive_cm_deprecated() -> None:
     """**Deprecated**
 
@@ -1011,6 +1205,7 @@ if __name__ == "__main__":
     claw_arm_motor: Motor = Motor(Ports.PORT8, GearSetting.RATIO_18_1, True)
     """The motor that changes the height of the arm that the claw is on, forward
     will lift the arm up."""
+    arm_rotation = Rotation(Ports.PORT7)
 
     # Check mode
     wait(500)
