@@ -1,3 +1,4 @@
+from operator import pos
 import math
 
 if __name__ == "__main__":
@@ -206,31 +207,29 @@ def get_output_from_input_curve(
     elif -100 + min_deadzone >= input_value:
         return -100
 
-    # Handle input curve for linear functions
-    if input_value > 0 and positive_base == 1 or input_value < 0 and negative_base == 1:
-        return input_value
-
-    # Do exponential functions
+    # Get normalized value
     if input_value > 0:
-        scaled_input_value = (
-            (input_value - neutral_deadzone)
-            * (100)
-            / ((100 - max_deadzone) - neutral_deadzone)
-        )
-        output_value = 100 * (
-            (1 - positive_base ** (scaled_input_value / 100)) / (1 - positive_base)
-        )
+        normalized_input_value = (input_value - neutral_deadzone) / ((100 - max_deadzone) - neutral_deadzone)
+    elif input_value < 0:
+        normalized_input_value = (input_value - (-100 + min_deadzone)) / (-neutral_deadzone - (-100 + min_deadzone))
+    else:
+        normalized_input_value = 0
+
+    # Handle input curve for linear functions
+    if input_value > 0 and positive_base == 1:
+        return normalized_input_value * ((100 - max_deadzone) - neutral_deadzone) + neutral_deadzone
+    elif input_value < 0 and negative_base == 1:
+        return normalized_input_value * (-neutral_deadzone - (-100 + min_deadzone))
+
+    # Handle exponential functions
+    if input_value > 0:
+        exponential_value = (1 - positive_base ** normalized_input_value) / (1 - positive_base)
+        output_value = exponential_value * 100
         return output_value
     elif input_value < 0:
-        scaled_input_value = (
-            (input_value - (-100 + min_deadzone))
-            * (100)
-            / (-neutral_deadzone - (-100 + min_deadzone))
-        ) - 100
-        output_value = -100 + 100 * (
-            (1 - (1 / negative_base) ** ((scaled_input_value + 100) / 100))
-            / (1 - (1 / negative_base))
-        )
+        negative_base = 1 / negative_base
+        exponential_value = (1 - negative_base ** normalized_input_value) / (1 - negative_base)
+        output_value = exponential_value * 100 - 100
         return output_value
 
     return input_value
