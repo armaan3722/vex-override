@@ -38,7 +38,7 @@ ROBOT_WIDTH: float = in_to_cm(11.25)
 TURNING_MULTIPLIER: float = 1.05
 """The number to multiply by the theoretical rotations to get actual rotations"""
 
-# Rotation arm constants
+# Rotating arm constants
 ROTATING_ARM_LENGTH: float = in_to_cm(11.5)
 """The length of the rotating arm in CM."""
 ROTATION_SENSOR_OFFSET: float = -32
@@ -57,6 +57,8 @@ ARM_MIN_HEIGHT: float = in_to_cm(6)
 """The minimum height of the arm, in CM."""
 ARM_MAX_HEIGHT: float = in_to_cm(24)
 """The maximum height of the arm, in CM."""
+ARM_SPEED: float = 50
+"""The speed to move the arm at during driver control."""
 
 # X input curve constants
 X_MIN_DEADZONE = 0
@@ -519,9 +521,9 @@ def control_arm() -> None:
     """Handle user control the arm and claw connected to the arm."""
     # Arm movement
     if controller.buttonUp.pressing() and not controller.buttonDown.pressing():
-        claw_arm_motor.spin(FORWARD, 25, PERCENT)
+        claw_arm_motor.spin(FORWARD, ARM_SPEED, PERCENT)
     elif controller.buttonDown.pressing() and not controller.buttonUp.pressing():
-        claw_arm_motor.spin(REVERSE, 25, PERCENT)
+        claw_arm_motor.spin(REVERSE, ARM_SPEED, PERCENT)
     else:
         claw_arm_motor.stop()
 
