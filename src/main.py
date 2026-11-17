@@ -27,6 +27,8 @@ on_button_presses = {
 }
 """What function should be run on button presses."""
 
+on_screen_press = {"screen": do_nothing_callback}
+
 # Robot property constants
 DRIVE_WHEELS_DIAMETER: float = in_to_cm(4)
 """Diameter in CM."""
@@ -259,10 +261,10 @@ class TwoOptionTouchscreen:
         self,
         name: str,
         left_button_name: str,
-        left_button_colour: Color,
+        left_button_colour,
         left_button_function,
         right_button_name: str,
-        right_button_colour: Color,
+        right_button_colour,
         right_button_function,
     ):
         self.name = name
@@ -273,7 +275,8 @@ class TwoOptionTouchscreen:
         self.right_button_colour = right_button_colour
         self.right_button_function = right_button_function
 
-    # start_event_listeners
+    def start_event_listeners(self):
+        on_screen_press["screen"] = self.screen_clicked
 
     def screen_clicked(self):
         # Get position of click
@@ -300,17 +303,15 @@ class TwoOptionTouchscreen:
         brain.screen.set_cursor(1, 1)
         brain.screen.print(self.name)
 
-        # Set outline color
-        brain.screen.set_pen_color(Color.TRANSPARENT)
-
-        # Draw button on left
+        # Write button labels
         brain.screen.set_cursor(2, 1)
         brain.screen.print(self.left_button_name)
-        brain.screen.draw_rectangle(10, 50, 220, 180, self.left_button_colour)
-
-        # Draw button on right
         brain.screen.set_cursor(2, 25)
         brain.screen.print(self.right_button_name)
+
+        # Draw buttons
+        brain.screen.set_pen_color(Color.TRANSPARENT)
+        brain.screen.draw_rectangle(10, 50, 220, 180, self.left_button_colour)
         brain.screen.draw_rectangle(250, 50, 220, 180, self.right_button_colour)
 
 
@@ -323,30 +324,41 @@ def red_on_right_autonomous() -> None:
     drive_cm(15, 25)
     turn_angle(180, 25)
     set_arm_height(in_to_cm(18.5), 25)
-    drive_cm(25, 50)
+    drive_cm(22, 50)
     wait(200)
-    drive_cm(15, -40)
+    drive_cm(18, -40)
     wait(100)
     turn_angle(-113, 25)
-    drive_cm(in_to_cm(15.8), 25)
+    drive_cm(in_to_cm(15.6), 25)
     wait(100)
     set_arm_height(26, 25)
     wait(100)
-    open_claw()
+    claw_motor.spin(FORWARD, 100, PERCENT)
     wait(100)
-    close_claw()
+    claw_motor.spin(REVERSE, 100, PERCENT)
     wait(250)
     open_claw()
 
 
 def red_on_left_autonomous() -> None:
     """Autonomous program for when red goals are on right of robot."""
-    drive_cm(10, 25)
-    turn_angle(180, 25)
+    drive_cm(15, 25)
+    turn_angle(-180, 25)
     set_arm_height(in_to_cm(18.5), 25)
-    drive_cm(20, 50)
+    drive_cm(22, 50)
     wait(200)
-    drive_cm(15, -50)
+    drive_cm(18, -40)
+    wait(100)
+    turn_angle(118, 25)
+    drive_cm(in_to_cm(15), 25)
+    wait(100)
+    set_arm_height(26, 25)
+    wait(100)
+    claw_motor.spin(FORWARD, 100, PERCENT)
+    wait(25)
+    claw_motor.spin(REVERSE, 100, PERCENT)
+    wait(250)
+    open_claw()
 
 
 def drive_cm(distance: float, speed: float) -> None:
@@ -592,6 +604,10 @@ def run_button_functions(button_pressed: str) -> None:
     else:
         raise ValueError("Invalid button pressed.")
 
+def run_screen_functions() -> None:
+    disable_event_listeners()
+    on_screen_press["screen"]()
+
 
 def create_event_listeners() -> None:
     """Creates event listeners for buttons.
@@ -603,6 +619,7 @@ def create_event_listeners() -> None:
     controller.buttonB.pressed(run_button_functions, ("b",))
     controller.buttonUp.pressed(run_button_functions, ("up",))
     controller.buttonDown.pressed(run_button_functions, ("down",))
+    brain.screen.pressed(run_screen_functions)
 
 
 def disable_event_listeners() -> None:
@@ -807,7 +824,7 @@ def select_auto_test_mode() -> None:
     if controller.buttonA.pressing() and not button_a_previously_pressed:
         select_low_level_function_test()
     elif controller.buttonX.pressing() and not button_x_previously_pressed:
-        red_on_right_autonomous()
+        select_autonomous_route_a_team()
     else:
         # Runs if B pressed, goes back
         start_testing_mode()
@@ -1112,6 +1129,18 @@ def test_drive_cm_deprecated() -> None:
     controller.screen.print(speed_selected)
     drive_cm(distance_selected, speed_selected)
 
+def select_autonomous_route_a_team() -> None:
+    controller.screen.clear_screen(); controller.screen.set_cursor(1,1); controller.screen.print("test")
+
+    menu = TwoOptionTouchscreen("test_name", "left", Color.RED, test_left, "right", Color.BLUE, test_right)
+    menu.start_event_listeners()
+    menu.draw_menu()
+
+def test_left():
+    controller.screen.clear_screen(); controller.screen.set_cursor(1,1); controller.screen.print("left")
+
+def test_right():
+    controller.screen.clear_screen(); controller.screen.set_cursor(1,1); controller.screen.print("right")
 
 def get_numeric_value(
     default_value: float,
