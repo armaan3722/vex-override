@@ -29,6 +29,8 @@ on_button_presses = {
 
 on_screen_press = {"screen": do_nothing_callback}
 
+autonomous_route = {}
+
 # Robot property constants
 DRIVE_WHEELS_DIAMETER: float = in_to_cm(4)
 """Diameter in CM."""
@@ -275,6 +277,8 @@ class TwoOptionTouchscreen:
         self.right_button_colour = right_button_colour
         self.right_button_function = right_button_function
 
+        self.completed_selection = False
+
     def start_event_listeners(self):
         on_screen_press["screen"] = self.screen_clicked
 
@@ -285,12 +289,14 @@ class TwoOptionTouchscreen:
 
         # Check if within left button
         if 10 < press_x < 230 and 50 < press_y < 230:
+            self.completed_selection = True
             disable_event_listeners()
             self.left_button_function()
             return
 
         # Check if within right button
         if 250 < press_x < 470 and 50 < press_y < 230:
+            self.completed_selection = True
             disable_event_listeners()
             self.right_button_function()
             return
@@ -314,12 +320,16 @@ class TwoOptionTouchscreen:
         brain.screen.draw_rectangle(10, 50, 220, 180, self.left_button_colour)
         brain.screen.draw_rectangle(250, 50, 220, 180, self.right_button_colour)
 
+    def decision_completed(self):
+        return self.completed_selection
+
 
 def autonomous() -> None:
     """Control all functionality required for the autonomous period."""
+    autonomous_route["route"]()
 
 
-def red_on_right_autonomous() -> None:
+def score_right_autonomous() -> None:
     """Autonomous program for when red goals are on right of robot."""
     drive_cm(15, 25)
     turn_angle(180, 25)
@@ -328,19 +338,19 @@ def red_on_right_autonomous() -> None:
     wait(200)
     drive_cm(18, -40)
     wait(100)
-    turn_angle(-113, 25)
-    drive_cm(in_to_cm(15.6), 25)
+    turn_angle(-109, 25)
+    drive_cm(in_to_cm(14.8), 25)
     wait(100)
     set_arm_height(26, 25)
     wait(100)
     claw_motor.spin(FORWARD, 100, PERCENT)
-    wait(100)
+    wait(75)
     claw_motor.spin(REVERSE, 100, PERCENT)
     wait(250)
     open_claw()
 
 
-def red_on_left_autonomous() -> None:
+def score_left_autonomous() -> None:
     """Autonomous program for when red goals are on right of robot."""
     drive_cm(15, 25)
     turn_angle(-180, 25)
@@ -604,6 +614,7 @@ def run_button_functions(button_pressed: str) -> None:
     else:
         raise ValueError("Invalid button pressed.")
 
+
 def run_screen_functions() -> None:
     disable_event_listeners()
     on_screen_press["screen"]()
@@ -824,7 +835,7 @@ def select_auto_test_mode() -> None:
     if controller.buttonA.pressing() and not button_a_previously_pressed:
         select_low_level_function_test()
     elif controller.buttonX.pressing() and not button_x_previously_pressed:
-        select_autonomous_route_a_team()
+        score_right_autonomous()
     else:
         # Runs if B pressed, goes back
         start_testing_mode()
@@ -1129,18 +1140,32 @@ def test_drive_cm_deprecated() -> None:
     controller.screen.print(speed_selected)
     drive_cm(distance_selected, speed_selected)
 
-def select_autonomous_route_a_team() -> None:
-    controller.screen.clear_screen(); controller.screen.set_cursor(1,1); controller.screen.print("test")
 
-    menu = TwoOptionTouchscreen("test_name", "left", Color.RED, test_left, "right", Color.BLUE, test_right)
+def select_autonomous_route(wait_for_selection: bool) -> None:
+    menu = TwoOptionTouchscreen(
+        "Scoring Direction",
+        "left",
+        Color.RED,
+        set_autonomous_route_left,
+        "right",
+        Color.RED,
+        set_autonomous_route_right,
+    )
     menu.start_event_listeners()
     menu.draw_menu()
 
-def test_left():
-    controller.screen.clear_screen(); controller.screen.set_cursor(1,1); controller.screen.print("left")
+    if wait_for_selection:
+        while not menu.decision_completed():
+            wait(100)
 
-def test_right():
-    controller.screen.clear_screen(); controller.screen.set_cursor(1,1); controller.screen.print("right")
+
+def set_autonomous_route_left():
+    autonomous_route["route"] = score_left_autonomous
+
+
+def set_autonomous_route_right():
+    autonomous_route["route"] = score_right_autonomous
+
 
 def get_numeric_value(
     default_value: float,
@@ -1253,6 +1278,7 @@ if __name__ == "__main__":
         testing = False
 
     if not testing:
+        select_autonomous_route(True)
         competition = Competition(user_control, autonomous)
     else:
         start_testing_mode()
