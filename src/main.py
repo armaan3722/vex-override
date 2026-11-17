@@ -255,16 +255,42 @@ def get_height_from_angle(
 
 
 class TwoOptionTouchscreen:
-    def __init__(self, name: str, left_button_name: str, left_button_colour: Color, right_button_name: str, right_button_colour: Color):
+    def __init__(
+        self,
+        name: str,
+        left_button_name: str,
+        left_button_colour: Color,
+        left_button_function,
+        right_button_name: str,
+        right_button_colour: Color,
+        right_button_function,
+    ):
         self.name = name
         self.left_button_name = left_button_name
         self.left_button_colour = left_button_colour
+        self.left_button_function = left_button_function
         self.right_button_name = right_button_name
         self.right_button_colour = right_button_colour
+        self.right_button_function = right_button_function
 
     # start_event_listeners
 
-    # screen_clicked
+    def screen_clicked(self):
+        # Get position of click
+        press_x = brain.screen.x_position()
+        press_y = brain.screen.y_position()
+
+        # Check if within left button
+        if 10 < press_x < 230 and 50 < press_y < 230:
+            disable_event_listeners()
+            self.left_button_function()
+            return
+
+        # Check if within right button
+        if 250 < press_x < 470 and 50 < press_y < 230:
+            disable_event_listeners()
+            self.right_button_function()
+            return
 
     def draw_menu(self):
         # Clear the screen
@@ -280,12 +306,13 @@ class TwoOptionTouchscreen:
         # Draw button on left
         brain.screen.set_cursor(2, 1)
         brain.screen.print(self.left_button_name)
-        brain.screen.draw_rectangle(10, 50, 220, 180, Color.RED)
+        brain.screen.draw_rectangle(10, 50, 220, 180, self.left_button_colour)
 
         # Draw button on right
         brain.screen.set_cursor(2, 25)
         brain.screen.print(self.right_button_name)
-        brain.screen.draw_rectangle(250, 50, 220, 180, Color.RED)
+        brain.screen.draw_rectangle(250, 50, 220, 180, self.right_button_colour)
+
 
 def autonomous() -> None:
     """Control all functionality required for the autonomous period."""
@@ -310,6 +337,7 @@ def red_on_right_autonomous() -> None:
     close_claw()
     wait(250)
     open_claw()
+
 
 def red_on_left_autonomous() -> None:
     """Autonomous program for when red goals are on right of robot."""
@@ -760,7 +788,11 @@ def select_auto_test_mode() -> None:
 
     # Wait for button press
     while True:
-        if (controller.buttonA.pressing() and not button_a_previously_pressed) or (controller.buttonB.pressing() and not button_b_previously_pressed) or (controller.buttonX.pressing() and not button_x_previously_pressed):
+        if (
+            (controller.buttonA.pressing() and not button_a_previously_pressed)
+            or (controller.buttonB.pressing() and not button_b_previously_pressed)
+            or (controller.buttonX.pressing() and not button_x_previously_pressed)
+        ):
             break
 
         # Update state
