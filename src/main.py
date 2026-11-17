@@ -57,7 +57,7 @@ ARM_MIN_HEIGHT: float = in_to_cm(6)
 """The minimum height of the arm, in CM."""
 ARM_MAX_HEIGHT: float = in_to_cm(24)
 """The maximum height of the arm, in CM."""
-ARM_SPEED: float = 50
+ARM_SPEED: float = 100
 """The speed to move the arm at during driver control."""
 
 # X input curve constants
@@ -286,7 +286,7 @@ def get_output_from_input_curve(
         return output_value
 
     return input_value
- 
+
 
 def get_height_from_angle(
     angle: float, arm_length: float, pivot_height: float
@@ -376,12 +376,16 @@ def drive_cm(distance: float, speed: float) -> None:
 
 def close_claw() -> None:
     """Close the claw and hold it closed."""
-    claw_motor.spin(REVERSE, 100, PERCENT)
+    claw_motor.set_timeout(225)
+    claw_motor.spin_for(REVERSE, 270, DEGREES, 100, PERCENT)
+    claw_motor.stop(BRAKE)
 
 
 def open_claw() -> None:
     """Open the claw fully."""
-    claw_motor.spin(FORWARD, 100, PERCENT)
+    claw_motor.set_timeout(225)
+    claw_motor.spin_for(FORWARD, 270, DEGREES, 100, PERCENT)
+    claw_motor.stop(BRAKE)
 
 
 def turn_angle(angle: float, speed: float) -> None:
@@ -532,12 +536,6 @@ def control_arm() -> None:
         close_claw()
     elif controller.buttonR1.pressing() and not controller.buttonR2.pressing():
         open_claw()
-    elif controller.buttonRight.pressing() and not controller.buttonLeft.pressing():
-        claw_motor.spin(FORWARD, 25, PERCENT)
-    elif controller.buttonLeft.pressing() and not controller.buttonRight.pressing():
-        claw_motor.spin(REVERSE, 25, PERCENT)
-    # else:
-    # claw_motor.stop(HOLD)
 
 
 def user_control() -> None:
