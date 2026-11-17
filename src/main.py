@@ -254,6 +254,39 @@ def get_height_from_angle(
 ############################
 
 
+class TwoOptionTouchscreen:
+    def __init__(self, name: str, left_button_name: str, left_button_colour: Color, right_button_name: str, right_button_colour: Color):
+        self.name = name
+        self.left_button_name = left_button_name
+        self.left_button_colour = left_button_colour
+        self.right_button_name = right_button_name
+        self.right_button_colour = right_button_colour
+
+    # start_event_listeners
+
+    # screen_clicked
+
+    def draw_menu(self):
+        # Clear the screen
+        brain.screen.clear_screen()
+
+        # Print the name of the menu
+        brain.screen.set_cursor(1, 1)
+        brain.screen.print(self.name)
+
+        # Set outline color
+        brain.screen.set_pen_color(Color.TRANSPARENT)
+
+        # Draw button on left
+        brain.screen.set_cursor(2, 1)
+        brain.screen.print(self.left_button_name)
+        brain.screen.draw_rectangle(10, 50, 220, 180, Color.RED)
+
+        # Draw button on right
+        brain.screen.set_cursor(2, 25)
+        brain.screen.print(self.right_button_name)
+        brain.screen.draw_rectangle(250, 50, 220, 180, Color.RED)
+
 def autonomous() -> None:
     """Control all functionality required for the autonomous period."""
 
