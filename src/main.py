@@ -57,22 +57,22 @@ ARM_MIN_HEIGHT: float = in_to_cm(6)
 """The minimum height of the arm, in CM."""
 ARM_MAX_HEIGHT: float = in_to_cm(24)
 """The maximum height of the arm, in CM."""
-ARM_SPEED: float = 100
+ARM_SPEED: float = 50
 """The speed to move the arm at during driver control."""
 
 # X input curve constants
-X_MIN_DEADZONE = 0
-X_NEUTRAL_DEADZONE = 0
-X_MAX_DEADZONE = 0
-X_POSITIVE_BASE = 1
-X_NEGATIVE_BASE = 1
+X_MIN_DEADZONE = 5
+X_NEUTRAL_DEADZONE = 5
+X_MAX_DEADZONE = 5
+X_POSITIVE_BASE = 15
+X_NEGATIVE_BASE = 15
 
 # Y input curve constants
-Y_MIN_DEADZONE = 0
-Y_NEUTRAL_DEADZONE = 0
-Y_MAX_DEADZONE = 0
-Y_POSITIVE_BASE = 1
-Y_NEGATIVE_BASE = 1
+Y_MIN_DEADZONE = 5
+Y_NEUTRAL_DEADZONE = 5
+Y_MAX_DEADZONE = 5
+Y_POSITIVE_BASE = 15
+Y_NEGATIVE_BASE = 15
 
 #########################
 ### UTILITY FUNCTIONS ###
