@@ -348,7 +348,33 @@ def score_right_autonomous() -> None:
     claw_motor.spin(REVERSE, 100, PERCENT)
     wait(250)
     open_claw()
+    wait(250)
+    drive_cm(15, -25)
 
+def score_right_double_autonomous() -> None:
+    drive_cm(15, 25)
+    turn_angle(180, 25)
+    set_arm_height(in_to_cm(18.5), 25)
+    drive_cm(22, 50)
+    wait(200)
+    drive_cm(18, -40)
+    wait(100)
+    drive_cm(18, 50)
+    wait(200)
+    drive_cm(18, -40)
+    wait(100)
+    turn_angle(-109, 25)
+    drive_cm(in_to_cm(14.8), 25)
+    wait(100)
+    set_arm_height(26, 25)
+    wait(100)
+    claw_motor.spin(FORWARD, 100, PERCENT)
+    wait(75)
+    claw_motor.spin(REVERSE, 100, PERCENT)
+    wait(250)
+    open_claw()
+    wait(250)
+    drive_cm(15, -25)
 
 def score_left_autonomous() -> None:
     """Autonomous program for when red goals are on right of robot."""
@@ -359,16 +385,19 @@ def score_left_autonomous() -> None:
     wait(200)
     drive_cm(18, -40)
     wait(100)
-    turn_angle(118, 25)
-    drive_cm(in_to_cm(15), 25)
+    turn_angle(116, 25)
+    drive_cm(in_to_cm(15.4), 25)
     wait(100)
-    set_arm_height(26, 25)
+    set_arm_height(20, 25)
     wait(100)
     claw_motor.spin(FORWARD, 100, PERCENT)
-    wait(25)
+    drive_cm(0.5, 25)
+    wait(75)
     claw_motor.spin(REVERSE, 100, PERCENT)
     wait(250)
     open_claw()
+    wait(250)
+    drive_cm(15, -25)
 
 
 def drive_cm(distance: float, speed: float) -> None:
@@ -835,7 +864,7 @@ def select_auto_test_mode() -> None:
     if controller.buttonA.pressing() and not button_a_previously_pressed:
         select_low_level_function_test()
     elif controller.buttonX.pressing() and not button_x_previously_pressed:
-        score_right_autonomous()
+        score_right_double_autonomous()
     else:
         # Runs if B pressed, goes back
         start_testing_mode()
