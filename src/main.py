@@ -304,6 +304,7 @@ class TwoOptionTouchscreen:
     def draw_menu(self):
         # Clear the screen
         brain.screen.clear_screen()
+        brain.screen.set_pen_color(Color.BLACK)
 
         # Print the name of the menu
         brain.screen.set_cursor(1, 1)
@@ -364,6 +365,27 @@ def score_right_double_autonomous() -> None:
     drive_cm(18, -40)
     wait(100)
     turn_angle(-109, 25)
+    drive_cm(in_to_cm(14.8), 25)
+    wait(100)
+    set_arm_height(26, 25)
+    wait(100)
+    claw_motor.spin(FORWARD, 100, PERCENT)
+    wait(75)
+    claw_motor.spin(REVERSE, 100, PERCENT)
+    wait(250)
+    open_claw()
+    wait(250)
+    drive_cm(15, -25)
+
+def score_left_tall() -> None:
+    drive_cm(15, 25)
+    turn_angle(-180, 25)
+    set_arm_height(in_to_cm(18.5), 25)
+    drive_cm(22, 50)
+    wait(200)
+    drive_cm(18, -40)
+    wait(100)
+    turn_angle(109, 25)
     drive_cm(in_to_cm(14.8), 25)
     wait(100)
     set_arm_height(26, 25)
@@ -864,7 +886,10 @@ def select_auto_test_mode() -> None:
     if controller.buttonA.pressing() and not button_a_previously_pressed:
         select_low_level_function_test()
     elif controller.buttonX.pressing() and not button_x_previously_pressed:
-        score_right_double_autonomous()
+        select_autonomous_route_a_team(True)
+        select_autonomous_route_b_exists(True)
+        select_autonomous_route()
+        autonomous()
     else:
         # Runs if B pressed, goes back
         start_testing_mode()
@@ -1169,16 +1194,15 @@ def test_drive_cm_deprecated() -> None:
     controller.screen.print(speed_selected)
     drive_cm(distance_selected, speed_selected)
 
-
-def select_autonomous_route(wait_for_selection: bool) -> None:
+def select_autonomous_route_a_team(wait_for_selection: bool) -> None:
     menu = TwoOptionTouchscreen(
-        "Scoring Direction",
-        "left",
+        "Team",
+        "Red",
         Color.RED,
-        set_autonomous_route_left,
-        "right",
-        Color.RED,
-        set_autonomous_route_right,
+        set_team_red,
+        "Blue",
+        Color.BLUE,
+        set_team_blue,
     )
     menu.start_event_listeners()
     menu.draw_menu()
@@ -1186,6 +1210,51 @@ def select_autonomous_route(wait_for_selection: bool) -> None:
     if wait_for_selection:
         while not menu.decision_completed():
             wait(100)
+
+def set_team_red():
+    autonomous_route["team"] = "red"
+    controller.screen.clear_screen(); controller.screen.set_cursor(1,1); controller.screen.print("red")
+
+def set_team_blue():
+    autonomous_route["team"] = "blue"
+    controller.screen.clear_screen(); controller.screen.set_cursor(1,1); controller.screen.print("blue")
+
+def select_autonomous_route_b_exists(wait_for_selection: bool) -> None:
+    menu = TwoOptionTouchscreen(
+        "Do auto",
+        "Yes",
+        Color.GREEN,
+        set_auto_yes,
+        "No",
+        Color.RED,
+        set_auto_no
+    )
+    menu.start_event_listeners()
+    menu.draw_menu()
+
+    if wait_for_selection:
+        while not menu.decision_completed():
+            wait(100)
+
+def set_auto_yes():
+    autonomous_route["run"] = True
+    controller.screen.clear_screen();controller.screen.set_cursor(1,1);controller.screen.print("yes")
+
+def set_auto_no():
+    autonomous_route["run"] = False
+    controller.screen.clear_screen();controller.screen.set_cursor(1,1);controller.screen.print("no")
+
+def select_autonomous_route():
+    if autonomous_route["run"] == False:
+        autonomous_route["route"] = do_nothing_callback
+        return
+
+    if autonomous_route["team"] == "red":
+        autonomous_route["route"] = score_right_autonomous
+    elif autonomous_route["team"] == "blue":
+        autonomous_route["route"] = score_right_double_autonomous
+    else:
+        autonomous_route["route"] = do_nothing_callback
 
 
 def set_autonomous_route_left():
@@ -1307,7 +1376,9 @@ if __name__ == "__main__":
         testing = False
 
     if not testing:
-        select_autonomous_route(True)
+        select_autonomous_route_a_team(True)
+        select_autonomous_route_b_exists(True)
+        select_autonomous_route()
         competition = Competition(user_control, autonomous)
     else:
         start_testing_mode()
