@@ -7,8 +7,8 @@ from src.main import get_output_from_input_curve
 NEUTRAL_DEADZONE = 5
 MAX_DEADZONE = 5
 MIN_DEADZONE = 5
-POSITIVE_BASE = 10
-NEGATIVE_BASE = 10
+POSITIVE_BASE = 15
+NEGATIVE_BASE = 15
 
 # Get X and Y values
 x_values = np.linspace(-100, 100, 400)

@@ -195,7 +195,7 @@ def test_get_rotations_from_angle_value_error(diameter, width, angle):
     with pytest.raises(ValueError):
         get_rotations_from_angle(diameter, width, angle)
 
-        
+
 #############################
 ### GET HEIGHT FROM ANGLE ###
 #############################
@@ -224,7 +224,7 @@ def test_get_height_from_angle_value_error(angle, arm_length, pivot_height):
     with pytest.raises(ValueError):
         get_height_from_angle(angle, arm_length, pivot_height)
 
-        
+
 ###################################
 ### GET OUTPUT FROM INPUT CURVE ###
 ###################################
